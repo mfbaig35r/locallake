@@ -147,6 +147,38 @@ def test_start_raises_when_marimo_dies_in_grace_window(tmp_path: Path) -> None:
     assert mgr.get("broken.py") is None
 
 
+def test_start_friendly_error_for_non_marimo_notebook(tmp_path: Path) -> None:
+    """When marimo rejects a plain .py file, surface that as a readable message."""
+    log_dir = tmp_path / "logs"
+    log_dir.mkdir()
+    mgr = MarimoSessionManager(
+        port_range_spec="2718-2727",
+        log_dir=log_dir,
+        spawn_grace_seconds=0.05,
+    )
+    nb = tmp_path / "plain.py"
+    nb.write_text("print('not a marimo notebook')\n")
+
+    # Build the fake proc up front — patching subprocess.Popen inside the
+    # spec=... lookup would self-reference and fail.
+    dead_proc = _fake_proc(pid=1, alive=False)
+
+    def fake_popen(*args: Any, **kwargs: Any) -> MagicMock:
+        log_fh = kwargs["stdout"]
+        log_fh.write(b"Error: Python script not recognized as a marimo notebook.\n")
+        log_fh.flush()
+        return dead_proc
+
+    with (
+        patch("locallake_api.marimo_sessions.subprocess.Popen", side_effect=fake_popen),
+        pytest.raises(MarimoSpawnError) as excinfo,
+    ):
+        mgr.start("plain.py", nb)
+    msg = str(excinfo.value)
+    assert "isn't a marimo notebook" in msg
+    assert "marimo convert" in msg
+
+
 def test_get_returns_none_when_process_died(tmp_path: Path) -> None:
     mgr = _mgr()
     nb = tmp_path / "x.py"

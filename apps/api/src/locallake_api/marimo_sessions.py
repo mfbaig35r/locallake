@@ -137,6 +137,17 @@ class MarimoSessionManager:
             with self._lock:
                 self._sessions.pop(notebook_path, None)
             tail = _tail_log(sess.log_path, lines=20)
+            # marimo's most common refusal: file isn't a marimo notebook.
+            # Surface that with a short, actionable message instead of the
+            # 20-line dump so the UI can show something readable.
+            if "not recognized as a marimo notebook" in tail:
+                raise MarimoSpawnError(
+                    f"{notebook_path} isn't a marimo notebook. Convert it inside "
+                    "the API container: "
+                    f"`docker compose exec api marimo convert {abs_path}`, then "
+                    "save the result over the original.",
+                    sess.log_path,
+                )
             raise MarimoSpawnError(
                 f"marimo exited immediately (exit={sess.process.returncode}). "
                 f"Last 20 log lines:\n{tail}",

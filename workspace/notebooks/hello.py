@@ -1,23 +1,53 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Demo notebook — copy of templates/hello.py, ready to run.
+"""Demo marimo notebook — proves the `__lake__` context works end-to-end.
 
-Phase 1 smoke target. Once Phase 5 ships notebook creation from templates,
-this file will be created on demand instead of committed to the repo.
+Run via the UI (click Run on the notebook detail page) or:
+    curl -X POST http://localhost:8000/notebooks/hello.py/run
 """
 
-from locallake import get_connection, log, save_artifact, workspace
+import marimo
 
-log("hello notebook started")
+__generated_with = "0.10.0"
+app = marimo.App()
 
-con = get_connection()
-con.execute(
-    "CREATE TABLE IF NOT EXISTS demo_hello (run_at TIMESTAMP DEFAULT now(), msg VARCHAR)"
-)
-con.execute("INSERT INTO demo_hello (msg) VALUES (?)", ["phase 1 demo"])
 
-(count,) = con.execute("SELECT COUNT(*) FROM demo_hello").fetchone()
-log(f"demo_hello row count is now {count}")
+@app.cell
+def _():
+    from locallake import get_connection, log, save_artifact, workspace
 
-save_artifact("summary.txt", f"workspace={workspace()}\nrows={count}\n")
+    return get_connection, log, save_artifact, workspace
 
-print(f"hello from locallake — wrote {count} rows to demo_hello")
+
+@app.cell
+def _(log):
+    log("hello notebook started")
+    return
+
+
+@app.cell
+def _(get_connection):
+    con = get_connection()
+    con.execute(
+        "CREATE TABLE IF NOT EXISTS demo_hello "
+        "(run_at TIMESTAMP DEFAULT now(), msg VARCHAR)"
+    )
+    con.execute("INSERT INTO demo_hello (msg) VALUES (?)", ["phase 1 demo"])
+    return (con,)
+
+
+@app.cell
+def _(con, log):
+    (count,) = con.execute("SELECT COUNT(*) FROM demo_hello").fetchone()
+    log(f"demo_hello row count is now {count}")
+    return (count,)
+
+
+@app.cell
+def _(count, save_artifact, workspace):
+    save_artifact("summary.txt", f"workspace={workspace()}\nrows={count}\n")
+    print(f"hello from locallake — wrote {count} rows to demo_hello")
+    return
+
+
+if __name__ == "__main__":
+    app.run()

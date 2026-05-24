@@ -47,6 +47,9 @@ ignore = []
 # FastAPI Depends(...) in default args is the framework's documented pattern
 "apps/api/src/locallake_api/routes/*.py" = ["B008"]
 "apps/api/src/locallake_api/websocket.py" = ["B008"]
+# Marimo notebook templates — cell function args echo the imported names
+# (Path, etc.) which marimo's reactive runtime threads back as dependencies.
+"packages/locallake_core/src/locallake_core/_templates/*.py" = ["N803"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -58,6 +61,12 @@ exclude = ["workspace/", "alembic/versions/"]
 
 [[tool.mypy.overrides]]
 module = ["locallake_core.context_template"]
+ignore_errors = true
+
+# Bundled marimo notebook templates — `@app.cell` functions don't carry type
+# hints by design (they're notebook cells, executed by marimo's runtime).
+[[tool.mypy.overrides]]
+module = ["locallake_core._templates.*"]
 ignore_errors = true
 
 [tool.pytest.ini_options]
