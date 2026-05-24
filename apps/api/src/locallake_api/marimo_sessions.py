@@ -24,6 +24,7 @@ import os
 import signal
 import subprocess
 import threading
+import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -32,6 +33,19 @@ logger = logging.getLogger(__name__)
 
 
 _DEFAULT_PORT_RANGE = "2718-2727"
+
+
+def _tail_log(path: str | None, *, lines: int) -> str:
+    """Best-effort read of the last N lines of ``path``. Empty string on failure."""
+    if not path:
+        return ""
+    try:
+        with open(path, "rb") as fh:
+            data = fh.read()
+        text = data.decode("utf-8", errors="replace")
+        return "\n".join(text.splitlines()[-lines:])
+    except OSError:
+        return ""
 
 
 def _parse_port_range(spec: str) -> tuple[int, int]:
@@ -55,6 +69,7 @@ class MarimoSession:
     pid: int
     started_at: datetime
     url: str
+    log_path: str | None = None
     process: subprocess.Popen[bytes] | None = field(default=None, repr=False)
 
 
@@ -62,19 +77,47 @@ class PortPoolExhaustedError(RuntimeError):
     """Every port in the configured range is held by a running session."""
 
 
+class MarimoSpawnError(RuntimeError):
+    """marimo died within the post-spawn grace window. See ``log_path``."""
+
+    def __init__(self, message: str, log_path: str | None) -> None:
+        super().__init__(message)
+        self.log_path = log_path
+
+
 class MarimoSessionManager:
     """One per API process. Thread-safe — routes run on different workers."""
 
-    def __init__(self, port_range_spec: str | None = None) -> None:
+    def __init__(
+        self,
+        port_range_spec: str | None = None,
+        *,
+        log_dir: Path | None = None,
+        spawn_grace_seconds: float = 0.5,
+    ) -> None:
         spec = port_range_spec or os.environ.get("LOCALLAKE_MARIMO_PORT_RANGE", _DEFAULT_PORT_RANGE)
         self._port_lo, self._port_hi = _parse_port_range(spec)
         self._sessions: dict[str, MarimoSession] = {}
         self._lock = threading.Lock()
+        # Where to tee marimo's stdout/stderr. Default is /tmp because the
+        # workspace logs dir may not exist at manager construction time.
+        env_dir = os.environ.get("LOCALLAKE_MARIMO_LOG_DIR")
+        self._log_dir = log_dir or (Path(env_dir) if env_dir else Path("/tmp/locallake-marimo"))
+        # Post-spawn liveness window. Long enough to catch marimo dying on a
+        # bad flag or port-bind failure, short enough not to block the route.
+        # Tests set this to 0 to skip the sleep entirely.
+        self._spawn_grace_seconds = spawn_grace_seconds
 
     # ---- Public API ------------------------------------------------------
 
     def start(self, notebook_path: str, abs_path: Path) -> MarimoSession:
-        """Spawn marimo edit for ``abs_path``; reuse an existing live session."""
+        """Spawn marimo edit for ``abs_path``; reuse an existing live session.
+
+        Includes a short post-spawn grace check — marimo sometimes exits within
+        the first second on bad flags or port-bind failures, and we'd rather
+        surface that here than via a useless "session started" + browser
+        ERR_CONNECTION_RESET later.
+        """
         with self._lock:
             existing = self._sessions.get(notebook_path)
             if existing is not None and self._is_alive(existing):
@@ -86,7 +129,20 @@ class MarimoSessionManager:
             port = self._allocate_port_locked()
             sess = self._spawn(notebook_path, abs_path, port)
             self._sessions[notebook_path] = sess
-            return sess
+
+        # Outside the lock — sleep is short but we shouldn't pin the manager.
+        if self._spawn_grace_seconds > 0:
+            time.sleep(self._spawn_grace_seconds)
+        if sess.process is not None and sess.process.poll() is not None:
+            with self._lock:
+                self._sessions.pop(notebook_path, None)
+            tail = _tail_log(sess.log_path, lines=20)
+            raise MarimoSpawnError(
+                f"marimo exited immediately (exit={sess.process.returncode}). "
+                f"Last 20 log lines:\n{tail}",
+                sess.log_path,
+            )
+        return sess
 
     def stop(self, notebook_path: str) -> bool:
         """Terminate the session for ``notebook_path``. Returns ``True`` if stopped."""
@@ -140,13 +196,24 @@ class MarimoSessionManager:
             "--no-token",
             "--headless",
             "--host=0.0.0.0",
+            "--skip-update-check",
             str(abs_path),
         ]
-        logger.info("starting marimo session: %s", " ".join(cmd))
+        # Per-session log so the user can debug "why didn't marimo start" by
+        # tailing one file. Stays around until manager.stop() (intentional —
+        # post-mortem after a crash is more valuable than tidy).
+        self._log_dir.mkdir(parents=True, exist_ok=True)
+        safe_name = notebook_path.replace("/", "__")
+        log_path = self._log_dir / f"marimo-{safe_name}-{port}.log"
+        # Popen owns this handle for the lifetime of the subprocess — a
+        # `with` block would close it the moment we exit the function and
+        # marimo would lose its stdout sink.
+        log_fh = open(log_path, "wb")  # noqa: SIM115
+        logger.info("starting marimo session: %s (log=%s)", " ".join(cmd), log_path)
         proc = subprocess.Popen(
             cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdout=log_fh,
+            stderr=subprocess.STDOUT,
             stdin=subprocess.DEVNULL,
             start_new_session=True,
         )
@@ -156,6 +223,7 @@ class MarimoSessionManager:
             pid=proc.pid,
             started_at=datetime.now(UTC),
             url=f"http://localhost:{port}",
+            log_path=str(log_path),
             process=proc,
         )
 

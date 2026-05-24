@@ -32,6 +32,7 @@ from locallake_api.deps import (
 )
 from locallake_api.marimo_sessions import (
     MarimoSessionManager,
+    MarimoSpawnError,
     PortPoolExhaustedError,
 )
 from locallake_api.schemas import (
@@ -95,6 +96,7 @@ def _session_out(sess: Any) -> MarimoSessionOut:
         pid=sess.pid,
         started_at=sess.started_at,
         url=sess.url,
+        log_path=sess.log_path,
     )
 
 
@@ -119,6 +121,8 @@ async def open_in_marimo(
         sess = sessions.start(notebook_path, full)
     except PortPoolExhaustedError as exc:
         raise HTTPException(503, str(exc)) from exc
+    except MarimoSpawnError as exc:
+        raise HTTPException(500, str(exc)) from exc
     return _session_out(sess)
 
 

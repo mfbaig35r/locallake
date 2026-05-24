@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from locallake_api.marimo_sessions import (
     MarimoSessionManager,
+    MarimoSpawnError,
     PortPoolExhaustedError,
     _parse_port_range,
 )
@@ -21,7 +22,13 @@ def _fake_proc(*, alive: bool = True, pid: int = 4242) -> MagicMock:
     proc = MagicMock(spec=subprocess.Popen)
     proc.pid = pid
     proc.poll.return_value = None if alive else 0
+    proc.returncode = None if alive else 0
     return proc
+
+
+def _mgr(port_range_spec: str = "2718-2727") -> MarimoSessionManager:
+    """Manager with the spawn grace window disabled so tests don't sleep."""
+    return MarimoSessionManager(port_range_spec=port_range_spec, spawn_grace_seconds=0)
 
 
 @pytest.mark.parametrize(
@@ -39,7 +46,7 @@ def test_parse_port_range_invalid(spec: str) -> None:
 
 
 def test_start_spawns_and_returns_session(tmp_path: Path) -> None:
-    mgr = MarimoSessionManager(port_range_spec="2718-2727")
+    mgr = _mgr()
     nb = tmp_path / "hello.py"
     nb.write_text("# nb\n")
     fake = _fake_proc(pid=999)
@@ -59,7 +66,7 @@ def test_start_spawns_and_returns_session(tmp_path: Path) -> None:
 
 
 def test_start_reuses_live_session(tmp_path: Path) -> None:
-    mgr = MarimoSessionManager(port_range_spec="2718-2727")
+    mgr = _mgr()
     nb = tmp_path / "hello.py"
     nb.write_text("# nb\n")
     fake = _fake_proc()
@@ -71,22 +78,27 @@ def test_start_reuses_live_session(tmp_path: Path) -> None:
 
 
 def test_start_replaces_dead_session(tmp_path: Path) -> None:
-    mgr = MarimoSessionManager(port_range_spec="2718-2727")
+    """A session that dies AFTER starting gets replaced on the next start()."""
+    mgr = _mgr()
     nb = tmp_path / "hello.py"
     nb.write_text("# nb\n")
-    dead = _fake_proc(alive=False)
-    alive = _fake_proc(alive=True, pid=2)
-    with patch("locallake_api.marimo_sessions.subprocess.Popen", side_effect=[dead, alive]):
+    first_proc = _fake_proc(pid=1)
+    second_proc = _fake_proc(pid=2)
+    with patch(
+        "locallake_api.marimo_sessions.subprocess.Popen",
+        side_effect=[first_proc, second_proc],
+    ):
         first = mgr.start("hello.py", nb)
-        # Simulate the process dying — poll() returns non-None.
-        first.process.poll.return_value = 0  # type: ignore[union-attr]
+        # Process dies later (after the grace window already passed clean).
+        first_proc.poll.return_value = 0
+        first_proc.returncode = 0
         second = mgr.start("hello.py", nb)
     assert second.pid == 2
     assert second is not first
 
 
 def test_start_allocates_next_port_for_different_notebook(tmp_path: Path) -> None:
-    mgr = MarimoSessionManager(port_range_spec="2718-2720")
+    mgr = _mgr("2718-2720")
     nb_a = tmp_path / "a.py"
     nb_b = tmp_path / "b.py"
     nb_a.write_text("# a")
@@ -101,7 +113,7 @@ def test_start_allocates_next_port_for_different_notebook(tmp_path: Path) -> Non
 
 
 def test_start_raises_when_pool_exhausted(tmp_path: Path) -> None:
-    mgr = MarimoSessionManager(port_range_spec="2718-2718")  # one slot only
+    mgr = _mgr("2718-2718")  # one slot only
     nb_a = tmp_path / "a.py"
     nb_b = tmp_path / "b.py"
     nb_a.write_text("a")
@@ -112,8 +124,31 @@ def test_start_raises_when_pool_exhausted(tmp_path: Path) -> None:
             mgr.start("b.py", nb_b)
 
 
+def test_start_raises_when_marimo_dies_in_grace_window(tmp_path: Path) -> None:
+    """If marimo exits within the grace window, start() raises MarimoSpawnError."""
+    mgr = MarimoSessionManager(
+        port_range_spec="2718-2727",
+        log_dir=tmp_path / "marimo-logs",
+        spawn_grace_seconds=0.05,
+    )
+    nb = tmp_path / "broken.py"
+    nb.write_text("# nb\n")
+    dying = _fake_proc()
+    dying.poll.return_value = 42  # already exited by the time we check
+    dying.returncode = 42
+    with (
+        patch("locallake_api.marimo_sessions.subprocess.Popen", return_value=dying),
+        pytest.raises(MarimoSpawnError) as excinfo,
+    ):
+        mgr.start("broken.py", nb)
+    # The error message includes the exit code, and the session is gone from
+    # the manager so the next start retries cleanly.
+    assert "exit=42" in str(excinfo.value)
+    assert mgr.get("broken.py") is None
+
+
 def test_get_returns_none_when_process_died(tmp_path: Path) -> None:
-    mgr = MarimoSessionManager(port_range_spec="2718-2727")
+    mgr = _mgr()
     nb = tmp_path / "x.py"
     nb.write_text("x")
     fake = _fake_proc()
@@ -124,7 +159,7 @@ def test_get_returns_none_when_process_died(tmp_path: Path) -> None:
 
 
 def test_stop_terminates_and_removes(tmp_path: Path) -> None:
-    mgr = MarimoSessionManager(port_range_spec="2718-2727")
+    mgr = _mgr()
     nb = tmp_path / "x.py"
     nb.write_text("x")
     fake = _fake_proc()
@@ -140,12 +175,12 @@ def test_stop_terminates_and_removes(tmp_path: Path) -> None:
 
 
 def test_stop_returns_false_for_unknown(tmp_path: Path) -> None:
-    mgr = MarimoSessionManager(port_range_spec="2718-2727")
+    mgr = _mgr()
     assert mgr.stop("nothing-here.py") is False
 
 
 def test_stop_all_terminates_every_session(tmp_path: Path) -> None:
-    mgr = MarimoSessionManager(port_range_spec="2718-2727")
+    mgr = _mgr()
     for i, name in enumerate(["a.py", "b.py", "c.py"]):
         nb = tmp_path / name
         nb.write_text("x")
@@ -177,7 +212,7 @@ def test_route_open_starts_session(client: Any, lake_config: Any) -> None:
     """POST /notebooks/{path}/edit returns the session URL."""
     nb = Path(lake_config.paths.notebooks) / "hi.py"
     nb.write_text("# nb\n")
-    mgr = MarimoSessionManager(port_range_spec="2718-2727")
+    mgr = _mgr()
     _client_with_marimo(client, mgr)
     with patch("locallake_api.marimo_sessions.subprocess.Popen", return_value=_fake_proc(pid=7)):
         res = client.post("/notebooks/hi.py/edit")
@@ -188,7 +223,7 @@ def test_route_open_starts_session(client: Any, lake_config: Any) -> None:
 
 
 def test_route_open_404_for_missing(client: Any) -> None:
-    mgr = MarimoSessionManager(port_range_spec="2718-2727")
+    mgr = _mgr()
     _client_with_marimo(client, mgr)
     res = client.post("/notebooks/ghost.py/edit")
     assert res.status_code == 404
@@ -197,7 +232,7 @@ def test_route_open_404_for_missing(client: Any) -> None:
 def test_route_get_returns_running_session(client: Any, lake_config: Any) -> None:
     nb = Path(lake_config.paths.notebooks) / "hi.py"
     nb.write_text("# nb\n")
-    mgr = MarimoSessionManager(port_range_spec="2718-2727")
+    mgr = _mgr()
     _client_with_marimo(client, mgr)
     with patch("locallake_api.marimo_sessions.subprocess.Popen", return_value=_fake_proc(pid=11)):
         client.post("/notebooks/hi.py/edit")
@@ -209,7 +244,7 @@ def test_route_get_returns_running_session(client: Any, lake_config: Any) -> Non
 def test_route_get_returns_null_when_none(client: Any, lake_config: Any) -> None:
     nb = Path(lake_config.paths.notebooks) / "hi.py"
     nb.write_text("# nb\n")
-    mgr = MarimoSessionManager(port_range_spec="2718-2727")
+    mgr = _mgr()
     _client_with_marimo(client, mgr)
     res = client.get("/notebooks/hi.py/edit")
     assert res.status_code == 200
@@ -219,7 +254,7 @@ def test_route_get_returns_null_when_none(client: Any, lake_config: Any) -> None
 def test_route_delete_stops_session(client: Any, lake_config: Any) -> None:
     nb = Path(lake_config.paths.notebooks) / "hi.py"
     nb.write_text("# nb\n")
-    mgr = MarimoSessionManager(port_range_spec="2718-2727")
+    mgr = _mgr()
     _client_with_marimo(client, mgr)
     with (
         patch("locallake_api.marimo_sessions.subprocess.Popen", return_value=_fake_proc()),
@@ -232,7 +267,7 @@ def test_route_delete_stops_session(client: Any, lake_config: Any) -> None:
 
 
 def test_route_delete_404_for_no_session(client: Any) -> None:
-    mgr = MarimoSessionManager(port_range_spec="2718-2727")
+    mgr = _mgr()
     _client_with_marimo(client, mgr)
     res = client.delete("/notebooks/nothing.py/edit")
     assert res.status_code == 404

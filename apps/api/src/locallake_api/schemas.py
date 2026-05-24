@@ -252,6 +252,7 @@ class MarimoSessionOut(BaseModel):
     pid: int
     started_at: datetime
     url: str
+    log_path: str | None = None
 
 
 class WorkspaceOut(BaseModel):

@@ -22,23 +22,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/notebooks/{notebook_path}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Notebook */
-        get: operations["get_notebook_notebooks__notebook_path__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/notebooks/{notebook_path}/edit": {
         parameters: {
             query?: never;
@@ -72,6 +55,23 @@ export interface paths {
         put?: never;
         /** Run Notebook */
         post: operations["run_notebook_notebooks__notebook_path__run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notebooks/{notebook_path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Notebook */
+        get: operations["get_notebook_notebooks__notebook_path__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -600,6 +600,8 @@ export interface components {
             started_at: string;
             /** Url */
             url: string;
+            /** Log Path */
+            log_path?: string | null;
         };
         /** NotebookDetailOut */
         NotebookDetailOut: {
@@ -960,37 +962,6 @@ export interface operations {
             };
         };
     };
-    get_notebook_notebooks__notebook_path__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                notebook_path: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["NotebookDetailOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_marimo_session_notebooks__notebook_path__edit_get: {
         parameters: {
             query?: never;
@@ -1104,6 +1075,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_notebook_notebooks__notebook_path__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notebook_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotebookDetailOut"];
                 };
             };
             /** @description Validation Error */

@@ -65,48 +65,6 @@
         }
       }
     },
-    "/notebooks/{notebook_path}": {
-      "get": {
-        "tags": [
-          "notebooks"
-        ],
-        "summary": "Get Notebook",
-        "operationId": "get_notebook_notebooks__notebook_path__get",
-        "parameters": [
-          {
-            "name": "notebook_path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Notebook Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotebookDetailOut"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/notebooks/{notebook_path}/edit": {
       "post": {
         "tags": [
@@ -273,6 +231,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/JobRunOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notebooks/{notebook_path}": {
+      "get": {
+        "tags": [
+          "notebooks"
+        ],
+        "summary": "Get Notebook",
+        "operationId": "get_notebook_notebooks__notebook_path__get",
+        "parameters": [
+          {
+            "name": "notebook_path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Notebook Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotebookDetailOut"
                 }
               }
             }
@@ -1741,6 +1741,17 @@
           "url": {
             "type": "string",
             "title": "Url"
+          },
+          "log_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Log Path"
           }
         },
         "type": "object",
