@@ -17,6 +17,7 @@ from arq import create_pool
 from arq.connections import RedisSettings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from locallake_core.migrations import run_migrations
 
 from locallake_api import websocket
 from locallake_api.routes import (
@@ -34,6 +35,9 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    # Bring the metadata DB to head before accepting traffic. Idempotent.
+    run_migrations()
+
     redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379")
     pool = await create_pool(RedisSettings.from_dsn(redis_url))
     app.state.redis = pool
