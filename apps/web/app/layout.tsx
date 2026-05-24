@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { QueryProvider } from "@/components/providers/query-provider";
+import "./globals.css";
 
 export const metadata = {
   title: "LocalLake",
@@ -7,17 +9,9 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body
-        style={{
-          margin: 0,
-          fontFamily:
-            "ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif",
-          background: "#0a0a0a",
-          color: "#e5e5e5",
-        }}
-      >
-        {children}
+    <html lang="en" className="dark">
+      <body className="bg-background text-foreground antialiased">
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );

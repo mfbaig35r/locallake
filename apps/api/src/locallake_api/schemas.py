@@ -49,3 +49,23 @@ class CancelResponse(BaseModel):
     id: str
     status: str
     message: str
+
+
+class NotebookEntryOut(BaseModel):
+    path: str
+    name: str
+    size_bytes: int
+    last_modified: datetime
+
+
+class NotebookListOut(BaseModel):
+    items: list[NotebookEntryOut]
+    total: int
+
+
+class NotebookDetailOut(BaseModel):
+    path: str
+    name: str
+    size_bytes: int
+    last_modified: datetime
+    recent_runs: list[JobRunOut]

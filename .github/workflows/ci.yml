@@ -39,5 +39,7 @@ jobs:
           version: 10
       - name: Install
         run: pnpm install --frozen-lockfile || pnpm install
-      - name: Build
+      - name: Type check + build
         run: pnpm build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000

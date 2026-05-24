@@ -49,3 +49,40 @@ def test_run_notebook_subdirectory(
     assert r.status_code == 202, r.text
     body = r.json()
     assert body["notebook_path"] == "sub/nested.py"
+
+
+def test_list_notebooks_empty(client: TestClient) -> None:
+    r = client.get("/notebooks")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["total"] == 0
+    assert body["items"] == []
+
+
+def test_list_notebooks_returns_files(client: TestClient, lake_config: LakehouseConfig) -> None:
+    nb = Path(lake_config.paths.notebooks)
+    (nb / "a.py").write_text("# a")
+    (nb / "b.py").write_text("# b\n# more")
+    sub = nb / "sub"
+    sub.mkdir()
+    (sub / "c.py").write_text("# c")
+
+    r = client.get("/notebooks")
+    body = r.json()
+    paths = sorted(item["path"] for item in body["items"])
+    assert paths == ["a.py", "b.py", "sub/c.py"]
+    assert body["total"] == 3
+
+
+def test_get_notebook_detail(client: TestClient, lake_config: LakehouseConfig) -> None:
+    (Path(lake_config.paths.notebooks) / "ok.py").write_text("# ok")
+    r = client.get("/notebooks/ok.py")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["name"] == "ok.py"
+    assert body["recent_runs"] == []
+
+
+def test_get_notebook_detail_404(client: TestClient) -> None:
+    r = client.get("/notebooks/missing.py")
+    assert r.status_code == 404

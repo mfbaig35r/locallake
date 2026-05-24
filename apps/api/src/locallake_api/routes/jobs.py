@@ -31,6 +31,7 @@ async def list_jobs(
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     status: str | None = Query(default=None),
+    notebook_path: str | None = Query(default=None),
 ) -> JobListOut:
     session = factory()
     try:
@@ -39,6 +40,9 @@ async def list_jobs(
         if status:
             count_stmt = count_stmt.where(JobRun.status == status)
             list_stmt = list_stmt.where(JobRun.status == status)
+        if notebook_path:
+            count_stmt = count_stmt.where(JobRun.notebook_path == notebook_path)
+            list_stmt = list_stmt.where(JobRun.notebook_path == notebook_path)
         total = session.scalar(count_stmt) or 0
         rows = session.scalars(list_stmt.limit(limit).offset(offset)).all()
     finally:
