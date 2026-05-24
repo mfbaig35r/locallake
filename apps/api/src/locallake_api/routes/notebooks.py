@@ -16,10 +16,17 @@ from locallake_core.runs import (
     resolve_notebook_path,
     submit_job,
 )
+from locallake_core.templates import (
+    InvalidNotebookNameError,
+    NotebookAlreadyExistsError,
+    TemplateNotFoundError,
+    create_from_template,
+)
 from sqlalchemy import select
 
 from locallake_api.deps import get_config, get_redis_pool, get_session_factory
 from locallake_api.schemas import (
+    CreateNotebookRequest,
     JobRunOut,
     NotebookDetailOut,
     NotebookEntryOut,
@@ -80,6 +87,30 @@ async def get_notebook(
         size_bytes=stat.st_size,
         last_modified=datetime.fromtimestamp(stat.st_mtime, tz=UTC),
         recent_runs=[JobRunOut.model_validate(r) for r in rows],
+    )
+
+
+@router.post("", response_model=NotebookEntryOut, status_code=201)
+async def create_notebook(
+    body: CreateNotebookRequest,
+    cfg: LakehouseConfig = Depends(get_config),
+) -> NotebookEntryOut:
+    try:
+        dst = create_from_template(cfg, template=body.template, name=body.name)
+    except InvalidNotebookNameError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except TemplateNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except NotebookAlreadyExistsError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    stat = dst.stat()
+    from datetime import datetime
+
+    return NotebookEntryOut(
+        path=body.name,
+        name=body.name,
+        size_bytes=stat.st_size,
+        last_modified=datetime.fromtimestamp(stat.st_mtime, tz=UTC),
     )
 
 

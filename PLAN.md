@@ -1,6 +1,6 @@
 # LocalLake — Build Plan
 
-> **Status:** planning · **Owner:** Fahad Baig · **Drafted:** 2026-05-23
+> **Status:** v1.0 shipped (2026-05-24) · **Owner:** Fahad Baig · **Drafted:** 2026-05-23
 > **License:** Apache-2.0
 > **Repo:** `~/Projects/locallake/`
 

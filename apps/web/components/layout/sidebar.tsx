@@ -53,7 +53,7 @@ export function Sidebar() {
         })}
       </nav>
       <div className="border-t border-border p-3 text-xs text-muted-foreground">
-        Phase 2 — UI shell
+        v1.0 · local-first
       </div>
     </aside>
   );

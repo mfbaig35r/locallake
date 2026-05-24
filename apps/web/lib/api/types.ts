@@ -14,7 +14,8 @@ export interface paths {
         /** List Notebooks Endpoint */
         get: operations["list_notebooks_endpoint_notebooks_get"];
         put?: never;
-        post?: never;
+        /** Create Notebook */
+        post: operations["create_notebook_notebooks_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -49,6 +50,23 @@ export interface paths {
         put?: never;
         /** Run Notebook */
         post: operations["run_notebook_notebooks__notebook_path__run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Templates Endpoint */
+        get: operations["list_templates_endpoint_templates_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -260,6 +278,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/git/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status Endpoint */
+        get: operations["status_endpoint_git_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/git/log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Log Endpoint */
+        get: operations["log_endpoint_git_log_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -330,6 +382,51 @@ export interface components {
             type: string;
             /** Nullable */
             nullable: boolean;
+        };
+        /** CreateNotebookRequest */
+        CreateNotebookRequest: {
+            /** Template */
+            template: string;
+            /** Name */
+            name: string;
+        };
+        /** GitCommitOut */
+        GitCommitOut: {
+            /** Sha */
+            sha: string;
+            /** Short Sha */
+            short_sha: string;
+            /** Author */
+            author: string;
+            /**
+             * Date
+             * Format: date-time
+             */
+            date: string;
+            /** Message */
+            message: string;
+        };
+        /** GitLogOut */
+        GitLogOut: {
+            /** Items */
+            items: components["schemas"]["GitCommitOut"][];
+            /** Total */
+            total: number;
+        };
+        /** GitStatusOut */
+        GitStatusOut: {
+            /** Is Repo */
+            is_repo: boolean;
+            /** Branch */
+            branch: string | null;
+            /** Commit Sha */
+            commit_sha: string | null;
+            /** Dirty */
+            dirty: boolean;
+            /** Ahead */
+            ahead: number;
+            /** Behind */
+            behind: number;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -562,6 +659,25 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** TemplateEntryOut */
+        TemplateEntryOut: {
+            /** Name */
+            name: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /**
+             * Last Modified
+             * Format: date-time
+             */
+            last_modified: string;
+        };
+        /** TemplateListOut */
+        TemplateListOut: {
+            /** Items */
+            items: components["schemas"]["TemplateEntryOut"][];
+            /** Total */
+            total: number;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -600,6 +716,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NotebookListOut"];
+                };
+            };
+        };
+    };
+    create_notebook_notebooks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateNotebookRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotebookEntryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -666,6 +815,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_templates_endpoint_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateListOut"];
                 };
             };
         };
@@ -1050,6 +1219,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TableDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_endpoint_git_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitStatusOut"];
+                };
+            };
+        };
+    };
+    log_endpoint_git_log_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitLogOut"];
                 };
             };
             /** @description Validation Error */

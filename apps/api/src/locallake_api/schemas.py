@@ -165,3 +165,41 @@ class TableDetailOut(BaseModel):
     sample_columns: list[str]
     sample_rows: list[list[Any]]
     model_config = ConfigDict(populate_by_name=True)
+
+
+class TemplateEntryOut(BaseModel):
+    name: str
+    size_bytes: int
+    last_modified: datetime
+
+
+class TemplateListOut(BaseModel):
+    items: list[TemplateEntryOut]
+    total: int
+
+
+class CreateNotebookRequest(BaseModel):
+    template: str = Field(..., min_length=1, max_length=128)
+    name: str = Field(..., min_length=1, max_length=128)
+
+
+class GitStatusOut(BaseModel):
+    is_repo: bool
+    branch: str | None
+    commit_sha: str | None
+    dirty: bool
+    ahead: int
+    behind: int
+
+
+class GitCommitOut(BaseModel):
+    sha: str
+    short_sha: str
+    author: str
+    date: datetime
+    message: str
+
+
+class GitLogOut(BaseModel):
+    items: list[GitCommitOut]
+    total: int

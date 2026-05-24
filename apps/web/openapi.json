@@ -24,6 +24,45 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "notebooks"
+        ],
+        "summary": "Create Notebook",
+        "operationId": "create_notebook_notebooks_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNotebookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotebookEntryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/notebooks/{notebook_path}": {
@@ -120,6 +159,27 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates": {
+      "get": {
+        "tags": [
+          "templates"
+        ],
+        "summary": "List Templates Endpoint",
+        "operationId": "list_templates_endpoint_templates_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateListOut"
                 }
               }
             }
@@ -718,6 +778,72 @@
         }
       }
     },
+    "/git/status": {
+      "get": {
+        "tags": [
+          "git"
+        ],
+        "summary": "Status Endpoint",
+        "operationId": "status_endpoint_git_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitStatusOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/git/log": {
+      "get": {
+        "tags": [
+          "git"
+        ],
+        "summary": "Log Endpoint",
+        "operationId": "log_endpoint_git_log_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitLogOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health",
@@ -873,6 +999,135 @@
           "nullable"
         ],
         "title": "ColumnEntryOut"
+      },
+      "CreateNotebookRequest": {
+        "properties": {
+          "template": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Template"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "template",
+          "name"
+        ],
+        "title": "CreateNotebookRequest"
+      },
+      "GitCommitOut": {
+        "properties": {
+          "sha": {
+            "type": "string",
+            "title": "Sha"
+          },
+          "short_sha": {
+            "type": "string",
+            "title": "Short Sha"
+          },
+          "author": {
+            "type": "string",
+            "title": "Author"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Date"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sha",
+          "short_sha",
+          "author",
+          "date",
+          "message"
+        ],
+        "title": "GitCommitOut"
+      },
+      "GitLogOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GitCommitOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "GitLogOut"
+      },
+      "GitStatusOut": {
+        "properties": {
+          "is_repo": {
+            "type": "boolean",
+            "title": "Is Repo"
+          },
+          "branch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch"
+          },
+          "commit_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commit Sha"
+          },
+          "dirty": {
+            "type": "boolean",
+            "title": "Dirty"
+          },
+          "ahead": {
+            "type": "integer",
+            "title": "Ahead"
+          },
+          "behind": {
+            "type": "integer",
+            "title": "Behind"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_repo",
+          "branch",
+          "commit_sha",
+          "dirty",
+          "ahead",
+          "behind"
+        ],
+        "title": "GitStatusOut"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1524,6 +1779,51 @@
           "total"
         ],
         "title": "TableListOut"
+      },
+      "TemplateEntryOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "last_modified": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Modified"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "size_bytes",
+          "last_modified"
+        ],
+        "title": "TemplateEntryOut"
+      },
+      "TemplateListOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateEntryOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "TemplateListOut"
       },
       "ValidationError": {
         "properties": {

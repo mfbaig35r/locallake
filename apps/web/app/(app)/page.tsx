@@ -80,7 +80,7 @@ export default function DashboardPage() {
               <EmptyState
                 icon={<FileCode2 className="h-7 w-7" />}
                 title="No notebooks yet"
-                description={`Drop a .py file into your workspace notebooks dir.`}
+                description="Open Notebooks and click New to start from a template."
               />
             ) : (
               <ul className="space-y-2">

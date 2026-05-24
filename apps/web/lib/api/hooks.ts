@@ -18,6 +18,10 @@ export type SavedQueryIn = components["schemas"]["SavedQueryIn"];
 export type QueryHistoryEntry = components["schemas"]["QueryHistoryOut"];
 export type TableEntry = components["schemas"]["TableEntryOut"];
 export type TableDetail = components["schemas"]["TableDetailOut"];
+export type TemplateEntry = components["schemas"]["TemplateEntryOut"];
+export type CreateNotebookRequest = components["schemas"]["CreateNotebookRequest"];
+export type GitStatus = components["schemas"]["GitStatusOut"];
+export type GitCommit = components["schemas"]["GitCommitOut"];
 
 const JOBS_POLL_MS = 3000;
 
@@ -191,6 +195,41 @@ export function useQueryHistory(limit = 50) {
       if (error) throw error;
       return data!;
     },
+  });
+}
+
+export function useTemplates() {
+  return useQuery({
+    queryKey: ["templates"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/templates");
+      if (error) throw error;
+      return data!;
+    },
+  });
+}
+
+export function useCreateNotebook() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: CreateNotebookRequest) => {
+      const { data, error } = await api.POST("/notebooks", { body });
+      if (error) throw error;
+      return data!;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notebooks"] }),
+  });
+}
+
+export function useGitStatus() {
+  return useQuery({
+    queryKey: ["git", "status"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/git/status");
+      if (error) throw error;
+      return data!;
+    },
+    refetchInterval: 30_000,
   });
 }
 

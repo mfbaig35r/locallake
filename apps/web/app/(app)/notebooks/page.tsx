@@ -1,10 +1,11 @@
 "use client";
 
-import { FileCode2, Loader2, Play } from "lucide-react";
+import { FileCode2, Loader2, Play, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { NewNotebookModal } from "@/components/notebooks/new-notebook-modal";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ import { formatBytes, formatRelativeTime } from "@/lib/utils";
 export default function NotebooksPage() {
   const { data, isLoading } = useNotebooks();
   const [query, setQuery] = useState("");
+  const [newOpen, setNewOpen] = useState(false);
   const router = useRouter();
   const run = useRunNotebook();
 
@@ -49,12 +51,17 @@ export default function NotebooksPage() {
             Marimo notebooks in <code className="text-xs">workspace/notebooks</code>.
           </p>
         </div>
-        <Input
-          placeholder="Filter…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="w-60"
-        />
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Filter…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="w-60"
+          />
+          <Button size="sm" onClick={() => setNewOpen(true)}>
+            <Plus className="h-3.5 w-3.5" /> New
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -68,7 +75,14 @@ export default function NotebooksPage() {
           description={
             query
               ? "Try a different filter."
-              : "Add a .py marimo file to your workspace notebooks directory."
+              : "Click New to scaffold one from a template, or drop a .py file into workspace/notebooks."
+          }
+          action={
+            !query ? (
+              <Button size="sm" onClick={() => setNewOpen(true)}>
+                <Plus className="h-3.5 w-3.5" /> New notebook
+              </Button>
+            ) : undefined
           }
         />
       ) : (
@@ -115,6 +129,15 @@ export default function NotebooksPage() {
           </Table>
         </div>
       )}
+
+      <NewNotebookModal
+        open={newOpen}
+        onClose={() => setNewOpen(false)}
+        onCreated={(path) => {
+          toast.success("Created", { description: path });
+          router.push(`/notebooks/${path}`);
+        }}
+      />
     </div>
   );
 }

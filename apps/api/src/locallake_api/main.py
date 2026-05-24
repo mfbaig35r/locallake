@@ -19,7 +19,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from locallake_api import websocket
-from locallake_api.routes import artifacts, catalog, jobs, notebooks, sql
+from locallake_api.routes import (
+    artifacts,
+    catalog,
+    git,
+    jobs,
+    notebooks,
+    sql,
+    templates,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,10 +57,12 @@ app.add_middleware(
 )
 
 app.include_router(notebooks.router)
+app.include_router(templates.router)
 app.include_router(jobs.router)
 app.include_router(artifacts.router)
 app.include_router(sql.router)
 app.include_router(catalog.router)
+app.include_router(git.router)
 app.include_router(websocket.router)
 
 
