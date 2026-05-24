@@ -37,6 +37,9 @@ workspace/artifacts/*
 workspace/logs/*
 !workspace/**/.gitkeep
 
+# User-generated config — written by `lake init`, paths are host-specific
+config/workspace.yaml
+
 # Node
 node_modules/
 .next/
