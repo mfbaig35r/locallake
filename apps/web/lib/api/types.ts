@@ -39,6 +39,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/notebooks/{notebook_path}/edit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Marimo Session */
+        get: operations["get_marimo_session_notebooks__notebook_path__edit_get"];
+        put?: never;
+        /**
+         * Open In Marimo
+         * @description Spawn (or reuse) a marimo edit subprocess for ``notebook_path``.
+         */
+        post: operations["open_in_marimo_notebooks__notebook_path__edit_post"];
+        /** Stop Marimo Session */
+        delete: operations["stop_marimo_session_notebooks__notebook_path__edit_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/notebooks/{notebook_path}/run": {
         parameters: {
             query?: never;
@@ -563,6 +585,22 @@ export interface components {
             /** Timeout Seconds */
             timeout_seconds: number;
         };
+        /** MarimoSessionOut */
+        MarimoSessionOut: {
+            /** Notebook Path */
+            notebook_path: string;
+            /** Port */
+            port: number;
+            /** Pid */
+            pid: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Url */
+            url: string;
+        };
         /** NotebookDetailOut */
         NotebookDetailOut: {
             /** Path */
@@ -941,6 +979,97 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["NotebookDetailOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_marimo_session_notebooks__notebook_path__edit_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notebook_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarimoSessionOut"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_in_marimo_notebooks__notebook_path__edit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notebook_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarimoSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stop_marimo_session_notebooks__notebook_path__edit_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notebook_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

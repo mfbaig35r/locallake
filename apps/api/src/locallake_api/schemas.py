@@ -246,6 +246,14 @@ class WorkspacePathsOut(BaseModel):
     templates: str
 
 
+class MarimoSessionOut(BaseModel):
+    notebook_path: str
+    port: int
+    pid: int
+    started_at: datetime
+    url: str
+
+
 class WorkspaceOut(BaseModel):
     name: str
     root_path: str

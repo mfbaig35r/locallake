@@ -26,6 +26,7 @@ export type Schedule = components["schemas"]["ScheduleOut"];
 export type ScheduleIn = components["schemas"]["ScheduleIn"];
 export type ScheduleUpdate = components["schemas"]["ScheduleUpdate"];
 export type Workspace = components["schemas"]["WorkspaceOut"];
+export type MarimoSession = components["schemas"]["MarimoSessionOut"];
 
 const JOBS_POLL_MS = 3000;
 
@@ -226,6 +227,51 @@ export function useCreateNotebook() {
       return data!;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notebooks"] }),
+  });
+}
+
+export function useMarimoSession(path: string | null) {
+  return useQuery({
+    queryKey: ["marimo", path],
+    enabled: !!path,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/notebooks/{notebook_path}/edit", {
+        params: { path: { notebook_path: path! } },
+      });
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 5_000,
+  });
+}
+
+export function useOpenInMarimo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (path: string) => {
+      const { data, error } = await api.POST("/notebooks/{notebook_path}/edit", {
+        params: { path: { notebook_path: path } },
+      });
+      if (error) throw error;
+      return data!;
+    },
+    onSuccess: (_, path) =>
+      qc.invalidateQueries({ queryKey: ["marimo", path] }),
+  });
+}
+
+export function useStopMarimo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (path: string) => {
+      const { error } = await api.DELETE(
+        "/notebooks/{notebook_path}/edit",
+        { params: { path: { notebook_path: path } } }
+      );
+      if (error) throw error;
+    },
+    onSuccess: (_, path) =>
+      qc.invalidateQueries({ queryKey: ["marimo", path] }),
   });
 }
 

@@ -1,6 +1,14 @@
 "use client";
 
-import { CalendarClock, ChevronLeft, Loader2, Play } from "lucide-react";
+import {
+  CalendarClock,
+  ChevronLeft,
+  ExternalLink,
+  Loader2,
+  Pencil,
+  Play,
+  Square,
+} from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -10,7 +18,13 @@ import { NewScheduleModal } from "@/components/schedules/new-schedule-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useNotebook, useRunNotebook } from "@/lib/api/hooks";
+import {
+  useMarimoSession,
+  useNotebook,
+  useOpenInMarimo,
+  useRunNotebook,
+  useStopMarimo,
+} from "@/lib/api/hooks";
 import { formatBytes, formatDuration, formatRelativeTime } from "@/lib/utils";
 
 export default function NotebookDetailPage() {
@@ -19,7 +33,30 @@ export default function NotebookDetailPage() {
   const notebookPath = (params.path ?? []).map(decodeURIComponent).join("/");
   const { data, isLoading, error } = useNotebook(notebookPath);
   const run = useRunNotebook();
+  const marimoSession = useMarimoSession(notebookPath);
+  const openMarimo = useOpenInMarimo();
+  const stopMarimo = useStopMarimo();
   const [scheduleOpen, setScheduleOpen] = useState(false);
+
+  async function handleOpenInMarimo() {
+    try {
+      const sess = await openMarimo.mutateAsync(notebookPath);
+      window.open(sess.url, "_blank", "noopener");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "open failed";
+      toast.error("Could not start marimo", { description: msg });
+    }
+  }
+
+  async function handleStopMarimo() {
+    try {
+      await stopMarimo.mutateAsync(notebookPath);
+      toast.success("Marimo session stopped");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "stop failed";
+      toast.error("Could not stop", { description: msg });
+    }
+  }
 
   async function handleRun() {
     try {
@@ -71,6 +108,39 @@ export default function NotebookDetailPage() {
             <p className="truncate text-sm text-muted-foreground">{data.path}</p>
           </div>
           <div className="flex items-center gap-2">
+            {marimoSession.data ? (
+              <>
+                <a
+                  href={marimoSession.data.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" /> Open editor
+                </a>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleStopMarimo}
+                  disabled={stopMarimo.isPending}
+                >
+                  <Square className="h-3 w-3" /> Stop
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={handleOpenInMarimo}
+                disabled={openMarimo.isPending}
+              >
+                {openMarimo.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Pencil className="h-3.5 w-3.5" />
+                )}
+                Edit in marimo
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setScheduleOpen(true)}>
               <CalendarClock className="h-3.5 w-3.5" /> Schedule
             </Button>

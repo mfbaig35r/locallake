@@ -16,12 +16,17 @@ services:
       dockerfile: Dockerfile.api
     ports:
       - "8000:8000"
+      # Marimo edit sessions spawn inside the api container and bind to ports
+      # in the pool defined by LOCALLAKE_MARIMO_PORT_RANGE. Publish the same
+      # range to the host so the browser can reach them at localhost:<port>.
+      - "2718-2727:2718-2727"
     environment:
       LOCALLAKE_CONFIG: /config/workspace.yaml
       LOCALLAKE_METADATA_DB: /data/metadata.sqlite
       REDIS_URL: redis://redis:6379
       LOCALLAKE_PASSWORD: ${LOCALLAKE_PASSWORD:-}
       LOCALLAKE_CORS_ORIGINS: http://localhost:3000
+      LOCALLAKE_MARIMO_PORT_RANGE: ${LOCALLAKE_MARIMO_PORT_RANGE:-2718-2727}
     volumes:
       - ./workspace:/workspace
       - ./data:/data

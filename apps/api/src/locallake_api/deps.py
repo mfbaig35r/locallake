@@ -38,3 +38,10 @@ def get_redis_pool(request: Request) -> Any:
     if pool is None:
         raise HTTPException(503, "redis pool not initialized")
     return pool
+
+
+def get_marimo_sessions(request: Request) -> Any:
+    sessions = getattr(request.app.state, "marimo_sessions", None)
+    if sessions is None:
+        raise HTTPException(503, "marimo session manager not initialized")
+    return sessions

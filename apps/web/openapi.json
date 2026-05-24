@@ -107,6 +107,130 @@
         }
       }
     },
+    "/notebooks/{notebook_path}/edit": {
+      "post": {
+        "tags": [
+          "notebooks"
+        ],
+        "summary": "Open In Marimo",
+        "description": "Spawn (or reuse) a marimo edit subprocess for ``notebook_path``.",
+        "operationId": "open_in_marimo_notebooks__notebook_path__edit_post",
+        "parameters": [
+          {
+            "name": "notebook_path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Notebook Path"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarimoSessionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "notebooks"
+        ],
+        "summary": "Get Marimo Session",
+        "operationId": "get_marimo_session_notebooks__notebook_path__edit_get",
+        "parameters": [
+          {
+            "name": "notebook_path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Notebook Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/MarimoSessionOut"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get Marimo Session Notebooks  Notebook Path  Edit Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "notebooks"
+        ],
+        "summary": "Stop Marimo Session",
+        "operationId": "stop_marimo_session_notebooks__notebook_path__edit_delete",
+        "parameters": [
+          {
+            "name": "notebook_path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Notebook Path"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/notebooks/{notebook_path}/run": {
       "post": {
         "tags": [
@@ -1594,6 +1718,40 @@
           "timeout_seconds"
         ],
         "title": "JobRunOut"
+      },
+      "MarimoSessionOut": {
+        "properties": {
+          "notebook_path": {
+            "type": "string",
+            "title": "Notebook Path"
+          },
+          "port": {
+            "type": "integer",
+            "title": "Port"
+          },
+          "pid": {
+            "type": "integer",
+            "title": "Pid"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notebook_path",
+          "port",
+          "pid",
+          "started_at",
+          "url"
+        ],
+        "title": "MarimoSessionOut"
       },
       "NotebookDetailOut": {
         "properties": {

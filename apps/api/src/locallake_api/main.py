@@ -20,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from locallake_core.migrations import run_migrations
 
 from locallake_api import websocket
+from locallake_api.marimo_sessions import MarimoSessionManager
 from locallake_api.routes import (
     artifacts,
     catalog,
@@ -43,10 +44,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379")
     pool = await create_pool(RedisSettings.from_dsn(redis_url))
     app.state.redis = pool
+    app.state.marimo_sessions = MarimoSessionManager()
     logger.info("redis pool ready (%s)", redis_url)
     try:
         yield
     finally:
+        stopped = app.state.marimo_sessions.stop_all()
+        if stopped:
+            logger.info("stopped %d marimo session(s) on shutdown", stopped)
         await pool.aclose()
         logger.info("redis pool closed")
 

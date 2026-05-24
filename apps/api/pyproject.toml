@@ -11,6 +11,10 @@ dependencies = [
     "websockets>=12.0",
     "itsdangerous>=2.0",
     "arq>=0.26.0",
+    # `marimo edit` is launched as a subprocess by the marimo session manager.
+    # The CLI must be on PATH inside the API container; declaring it here puts
+    # it in the API venv.
+    "marimo>=0.10.0",
     "locallake-core",
 ]
 
