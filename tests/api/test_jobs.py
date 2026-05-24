@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from fastapi.testclient import TestClient
@@ -16,13 +16,14 @@ def _insert_run(
     status: str = "queued",
     notebook_path: str = "x.py",
     triggered_by: str = "test",
+    created_at: datetime | None = None,
 ) -> str:
     s = factory()
     try:
         r = JobRun(
             notebook_path=notebook_path,
             status=status,
-            created_at=datetime.now(UTC),
+            created_at=created_at or datetime.now(UTC),
             triggered_by=triggered_by,
         )
         s.add(r)
@@ -52,6 +53,28 @@ def test_list_jobs_filters_by_status(client: TestClient, session_factory: Any) -
     assert body["total"] == 2
     for item in body["items"]:
         assert item["status"] == "queued"
+
+
+def test_list_jobs_filters_by_triggered_by(client: TestClient, session_factory: Any) -> None:
+    _insert_run(session_factory, triggered_by="schedule")
+    _insert_run(session_factory, triggered_by="ui")
+    _insert_run(session_factory, triggered_by="schedule")
+    r = client.get("/jobs", params={"triggered_by": "schedule"})
+    body = r.json()
+    assert body["total"] == 2
+    for item in body["items"]:
+        assert item["triggered_by"] == "schedule"
+
+
+def test_list_jobs_since_filter(client: TestClient, session_factory: Any) -> None:
+    old = datetime.now(UTC) - timedelta(hours=2)
+    recent = datetime.now(UTC) - timedelta(minutes=5)
+    _insert_run(session_factory, created_at=old)
+    _insert_run(session_factory, created_at=recent)
+    cutoff = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+    r = client.get("/jobs", params={"since": cutoff})
+    body = r.json()
+    assert body["total"] == 1
 
 
 def test_list_jobs_pagination(client: TestClient, session_factory: Any) -> None:

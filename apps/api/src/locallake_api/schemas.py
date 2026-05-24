@@ -234,3 +234,19 @@ class ScheduleOut(BaseModel):
 class ScheduleListOut(BaseModel):
     items: list[ScheduleOut]
     total: int
+
+
+class WorkspacePathsOut(BaseModel):
+    notebooks: str
+    artifacts: str
+    logs: str
+    templates: str
+
+
+class WorkspaceOut(BaseModel):
+    name: str
+    root_path: str
+    database_path: str
+    metadata_db_path: str
+    paths: WorkspacePathsOut
+    worker_concurrency: int

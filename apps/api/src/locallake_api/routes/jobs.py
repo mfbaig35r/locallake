@@ -14,6 +14,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from locallake_core.models import JobRun
+from pydantic import AwareDatetime
 from sqlalchemy import func, select
 
 from locallake_api.deps import get_session_factory
@@ -32,6 +33,11 @@ async def list_jobs(
     offset: int = Query(default=0, ge=0),
     status: str | None = Query(default=None),
     notebook_path: str | None = Query(default=None),
+    triggered_by: str | None = Query(default=None),
+    since: AwareDatetime | None = Query(
+        default=None,
+        description="Only return runs created at or after this ISO timestamp (UTC).",
+    ),
 ) -> JobListOut:
     session = factory()
     try:
@@ -43,6 +49,14 @@ async def list_jobs(
         if notebook_path:
             count_stmt = count_stmt.where(JobRun.notebook_path == notebook_path)
             list_stmt = list_stmt.where(JobRun.notebook_path == notebook_path)
+        if triggered_by:
+            count_stmt = count_stmt.where(JobRun.triggered_by == triggered_by)
+            list_stmt = list_stmt.where(JobRun.triggered_by == triggered_by)
+        if since is not None:
+            # JobRun.created_at is stored naive UTC; strip tz for comparison.
+            naive = since.astimezone(UTC).replace(tzinfo=None)
+            count_stmt = count_stmt.where(JobRun.created_at >= naive)
+            list_stmt = list_stmt.where(JobRun.created_at >= naive)
         total = session.scalar(count_stmt) or 0
         rows = session.scalars(list_stmt.limit(limit).offset(offset)).all()
     finally:

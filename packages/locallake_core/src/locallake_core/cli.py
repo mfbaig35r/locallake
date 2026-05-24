@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import shutil
+import tarfile
+from datetime import UTC, datetime
 from importlib import metadata, resources
 from pathlib import Path
 
@@ -228,6 +230,136 @@ def reset(config_path: str, yes: bool) -> None:
                 entry.unlink()
         click.secho(f"  cleared {label}", fg="green")
     click.echo("done")
+
+
+@main.command()
+@click.option(
+    "--config",
+    "config_path",
+    default="config/workspace.yaml",
+    type=click.Path(dir_okay=False),
+)
+@click.option(
+    "--to",
+    "out_dir",
+    default="./backups",
+    help="Directory to write the archive into (default: ./backups)",
+    type=click.Path(file_okay=False),
+)
+@click.option(
+    "--include-artifacts",
+    is_flag=True,
+    default=False,
+    help="Include workspace/artifacts and workspace/logs. Off by default — they're "
+    "reproducible and can be large.",
+)
+def backup(config_path: str, out_dir: str, include_artifacts: bool) -> None:
+    """Bundle config + notebooks + databases into a single tar.gz archive.
+
+    Skips artifacts + logs unless --include-artifacts. The archive is portable:
+    `lake restore` on a fresh machine will recreate the workspace.
+    """
+    from locallake_core.config import LakehouseConfig
+
+    cfg_file = Path(config_path)
+    if not cfg_file.exists():
+        click.secho(f"  [missing] {config_path}", fg="red")
+        raise SystemExit(1)
+    cfg = LakehouseConfig.from_file(cfg_file)
+
+    target = Path(out_dir)
+    target.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    archive = target / f"locallake-{cfg.workspace.name}-{ts}.tar.gz"
+
+    workspace_root = Path(cfg.workspace.root_path)
+    db_path = Path(cfg.database.path)
+    meta_db = Path(cfg.database.path).with_name("metadata.sqlite")
+    skip_dirs = (
+        {Path(cfg.paths.artifacts).resolve(), Path(cfg.paths.logs).resolve()}
+        if not include_artifacts
+        else set()
+    )
+
+    def _filter(info: tarfile.TarInfo) -> tarfile.TarInfo | None:
+        # tarfile passes paths relative to the archive root; we work in absolute
+        # space via the closure's known dirs.
+        candidate = (Path(info.name)).resolve()
+        for skip in skip_dirs:
+            try:
+                candidate.relative_to(skip)
+                return None
+            except ValueError:
+                continue
+        return info
+
+    with tarfile.open(archive, "w:gz") as tar:
+        tar.add(cfg_file, arcname=f"config/{cfg_file.name}")
+        if workspace_root.is_dir():
+            for entry in sorted(workspace_root.rglob("*")):
+                if not entry.is_file():
+                    continue
+                rel = entry.relative_to(workspace_root.parent)
+                if not include_artifacts:
+                    try:
+                        # Skip anything under artifacts/ or logs/.
+                        entry.resolve().relative_to(Path(cfg.paths.artifacts).resolve())
+                        continue
+                    except ValueError:
+                        pass
+                    try:
+                        entry.resolve().relative_to(Path(cfg.paths.logs).resolve())
+                        continue
+                    except ValueError:
+                        pass
+                tar.add(entry, arcname=str(rel))
+        for path in (db_path, meta_db):
+            if path.is_file():
+                tar.add(path, arcname=f"data/{path.name}")
+
+    click.secho(f"  wrote {archive} ({archive.stat().st_size // 1024} KB)", fg="green")
+    if not include_artifacts:
+        click.echo("  (artifacts + logs skipped; pass --include-artifacts to bundle them)")
+
+
+@main.command()
+@click.argument("archive_path", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--into",
+    "target_dir",
+    default=".",
+    help="Directory to restore into (default: current dir).",
+    type=click.Path(file_okay=False),
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Overwrite existing files. Off by default to avoid clobbering live state.",
+)
+def restore(archive_path: str, target_dir: str, force: bool) -> None:
+    """Restore a workspace from a `lake backup` archive."""
+    archive = Path(archive_path)
+    target = Path(target_dir).resolve()
+    target.mkdir(parents=True, exist_ok=True)
+
+    with tarfile.open(archive, "r:gz") as tar:
+        members = tar.getmembers()
+        # Reject any member path that escapes the target after resolution. This
+        # is the "tarfile filter" pattern Python 3.12 adds for security.
+        for m in members:
+            dest = (target / m.name).resolve()
+            try:
+                dest.relative_to(target)
+            except ValueError:
+                click.secho(f"  refusing path traversal: {m.name}", fg="red")
+                raise SystemExit(1) from None
+            if dest.exists() and not force:
+                click.secho(f"  [exists] {m.name} (pass --force to overwrite)", fg="yellow")
+                raise SystemExit(1)
+        tar.extractall(target, filter="data")
+
+    click.secho(f"  restored {len(members)} entries into {target}", fg="green")
 
 
 if __name__ == "__main__":

@@ -29,6 +29,7 @@ from locallake_api.routes import (
     schedules,
     sql,
     templates,
+    workspace,
 )
 
 logger = logging.getLogger(__name__)
@@ -69,6 +70,7 @@ app.include_router(sql.router)
 app.include_router(catalog.router)
 app.include_router(git.router)
 app.include_router(schedules.router)
+app.include_router(workspace.router)
 app.include_router(websocket.router)
 
 

@@ -27,11 +27,38 @@ const STATUSES = [
   { value: "cancelled", label: "Cancelled" },
 ];
 
+const TRIGGERS = [
+  { value: undefined, label: "Any" },
+  { value: "ui", label: "UI" },
+  { value: "api", label: "API" },
+  { value: "schedule", label: "Schedule" },
+];
+
+const SINCE_PRESETS: { label: string; hours: number | null }[] = [
+  { label: "All time", hours: null },
+  { label: "1h", hours: 1 },
+  { label: "24h", hours: 24 },
+  { label: "7d", hours: 24 * 7 },
+];
+
+function computeSince(hours: number | null): string | undefined {
+  if (hours == null) return undefined;
+  return new Date(Date.now() - hours * 3600 * 1000).toISOString();
+}
+
 function JobsContent() {
   const search = useSearchParams();
   const initial = search.get("status") ?? undefined;
   const [status, setStatus] = useState<string | undefined>(initial);
-  const { data, isLoading } = useJobs({ status, limit: 100 });
+  const [triggeredBy, setTriggeredBy] = useState<string | undefined>();
+  const [sinceHours, setSinceHours] = useState<number | null>(null);
+  const since = computeSince(sinceHours);
+  const { data, isLoading } = useJobs({
+    status,
+    triggeredBy,
+    since,
+    limit: 100,
+  });
   const items = data?.items ?? [];
 
   return (
@@ -43,18 +70,50 @@ function JobsContent() {
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
-        {STATUSES.map((s) => (
-          <Button
-            key={s.label}
-            size="sm"
-            variant={status === s.value ? "default" : "outline"}
-            onClick={() => setStatus(s.value)}
-            className={cn(status === s.value ? "" : "text-muted-foreground")}
-          >
-            {s.label}
-          </Button>
-        ))}
+      <div className="space-y-2">
+        <FilterRow label="Status">
+          {STATUSES.map((s) => (
+            <Button
+              key={s.label}
+              size="sm"
+              variant={status === s.value ? "default" : "outline"}
+              onClick={() => setStatus(s.value)}
+              className={cn(status === s.value ? "" : "text-muted-foreground")}
+            >
+              {s.label}
+            </Button>
+          ))}
+        </FilterRow>
+        <FilterRow label="Triggered by">
+          {TRIGGERS.map((t) => (
+            <Button
+              key={t.label}
+              size="sm"
+              variant={triggeredBy === t.value ? "default" : "outline"}
+              onClick={() => setTriggeredBy(t.value)}
+              className={cn(
+                triggeredBy === t.value ? "" : "text-muted-foreground"
+              )}
+            >
+              {t.label}
+            </Button>
+          ))}
+        </FilterRow>
+        <FilterRow label="Since">
+          {SINCE_PRESETS.map((s) => (
+            <Button
+              key={s.label}
+              size="sm"
+              variant={sinceHours === s.hours ? "default" : "outline"}
+              onClick={() => setSinceHours(s.hours)}
+              className={cn(
+                sinceHours === s.hours ? "" : "text-muted-foreground"
+              )}
+            >
+              {s.label}
+            </Button>
+          ))}
+        </FilterRow>
       </div>
 
       {isLoading ? (
@@ -107,6 +166,17 @@ function JobsContent() {
           </Table>
         </div>
       )}
+    </div>
+  );
+}
+
+function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="mr-1 w-20 text-[10px] uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      {children}
     </div>
   );
 }

@@ -25,6 +25,7 @@ export type GitCommit = components["schemas"]["GitCommitOut"];
 export type Schedule = components["schemas"]["ScheduleOut"];
 export type ScheduleIn = components["schemas"]["ScheduleIn"];
 export type ScheduleUpdate = components["schemas"]["ScheduleUpdate"];
+export type Workspace = components["schemas"]["WorkspaceOut"];
 
 const JOBS_POLL_MS = 3000;
 
@@ -68,6 +69,8 @@ export function useNotebook(path: string | null) {
 export function useJobs(opts: {
   status?: string;
   notebookPath?: string;
+  triggeredBy?: string;
+  since?: string;
   limit?: number;
   offset?: number;
 } = {}) {
@@ -79,6 +82,8 @@ export function useJobs(opts: {
           query: {
             status: opts.status,
             notebook_path: opts.notebookPath,
+            triggered_by: opts.triggeredBy,
+            since: opts.since,
             limit: opts.limit ?? 50,
             offset: opts.offset ?? 0,
           },
@@ -221,6 +226,17 @@ export function useCreateNotebook() {
       return data!;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notebooks"] }),
+  });
+}
+
+export function useWorkspace() {
+  return useQuery({
+    queryKey: ["workspace"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/workspace");
+      if (error) throw error;
+      return data!;
+    },
   });
 }
 

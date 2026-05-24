@@ -249,6 +249,41 @@
               ],
               "title": "Notebook Path"
             }
+          },
+          {
+            "name": "triggered_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Triggered By"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only return runs created at or after this ISO timestamp (UTC).",
+              "title": "Since"
+            },
+            "description": "Only return runs created at or after this ISO timestamp (UTC)."
           }
         ],
         "responses": {
@@ -982,6 +1017,27 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspace": {
+      "get": {
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Get Workspace Info",
+        "operationId": "get_workspace_info_workspace_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceOut"
                 }
               }
             }
@@ -2181,6 +2237,71 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WorkspaceOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "root_path": {
+            "type": "string",
+            "title": "Root Path"
+          },
+          "database_path": {
+            "type": "string",
+            "title": "Database Path"
+          },
+          "metadata_db_path": {
+            "type": "string",
+            "title": "Metadata Db Path"
+          },
+          "paths": {
+            "$ref": "#/components/schemas/WorkspacePathsOut"
+          },
+          "worker_concurrency": {
+            "type": "integer",
+            "title": "Worker Concurrency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "root_path",
+          "database_path",
+          "metadata_db_path",
+          "paths",
+          "worker_concurrency"
+        ],
+        "title": "WorkspaceOut"
+      },
+      "WorkspacePathsOut": {
+        "properties": {
+          "notebooks": {
+            "type": "string",
+            "title": "Notebooks"
+          },
+          "artifacts": {
+            "type": "string",
+            "title": "Artifacts"
+          },
+          "logs": {
+            "type": "string",
+            "title": "Logs"
+          },
+          "templates": {
+            "type": "string",
+            "title": "Templates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notebooks",
+          "artifacts",
+          "logs",
+          "templates"
+        ],
+        "title": "WorkspacePathsOut"
       }
     }
   }

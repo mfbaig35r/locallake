@@ -348,6 +348,23 @@ export interface paths {
         patch: operations["update_schedule_schedules__schedule_id__patch"];
         trace?: never;
     };
+    "/workspace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Workspace Info */
+        get: operations["get_workspace_info_workspace_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -785,6 +802,31 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /** WorkspaceOut */
+        WorkspaceOut: {
+            /** Name */
+            name: string;
+            /** Root Path */
+            root_path: string;
+            /** Database Path */
+            database_path: string;
+            /** Metadata Db Path */
+            metadata_db_path: string;
+            paths: components["schemas"]["WorkspacePathsOut"];
+            /** Worker Concurrency */
+            worker_concurrency: number;
+        };
+        /** WorkspacePathsOut */
+        WorkspacePathsOut: {
+            /** Notebooks */
+            notebooks: string;
+            /** Artifacts */
+            artifacts: string;
+            /** Logs */
+            logs: string;
+            /** Templates */
+            templates: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -940,6 +982,9 @@ export interface operations {
                 offset?: number;
                 status?: string | null;
                 notebook_path?: string | null;
+                triggered_by?: string | null;
+                /** @description Only return runs created at or after this ISO timestamp (UTC). */
+                since?: string | null;
             };
             header?: never;
             path?: never;
@@ -1490,6 +1535,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_workspace_info_workspace_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceOut"];
                 };
             };
         };
