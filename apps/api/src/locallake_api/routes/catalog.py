@@ -11,7 +11,6 @@ from locallake_core.config import LakehouseConfig
 
 from locallake_api.deps import get_config
 from locallake_api.schemas import (
-    ColumnEntryOut,
     TableDetailOut,
     TableEntryOut,
     TableListOut,
@@ -27,7 +26,10 @@ async def list_tables_endpoint(
     cfg: LakehouseConfig = Depends(get_config),
 ) -> TableListOut:
     entries = list_tables(cfg.database.path)
-    items = [TableEntryOut(schema_name=e.schema, name=e.name, kind=e.kind) for e in entries]
+    items = [
+        TableEntryOut.model_validate({"schema": e.schema, "name": e.name, "kind": e.kind})
+        for e in entries
+    ]
     return TableListOut(items=items, total=len(items))
 
 
@@ -55,14 +57,16 @@ async def get_table_detail(
     else:
         sample_cols, sample = [], []
 
-    return TableDetailOut(
-        schema_name=detail.schema,
-        name=detail.name,
-        kind=detail.kind,
-        columns=[
-            ColumnEntryOut(name=c.name, type=c.type, nullable=c.nullable) for c in detail.columns
-        ],
-        row_count=detail.row_count,
-        sample_columns=sample_cols,
-        sample_rows=sample,
+    return TableDetailOut.model_validate(
+        {
+            "schema": detail.schema,
+            "name": detail.name,
+            "kind": detail.kind,
+            "columns": [
+                {"name": c.name, "type": c.type, "nullable": c.nullable} for c in detail.columns
+            ],
+            "row_count": detail.row_count,
+            "sample_columns": sample_cols,
+            "sample_rows": sample,
+        }
     )
