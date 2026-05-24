@@ -23,6 +23,12 @@ from locallake_core.models import JobRun
 logger = logging.getLogger(__name__)
 
 
+# Footer sentinel — the WebSocket log tailer uses this as a signal to close
+# the stream after the last bytes have been forwarded. Match exactly when
+# scanning; do not localize.
+LOG_FOOTER_SENTINEL = "=== run complete ==="
+
+
 class ArqPool(Protocol):
     """Subset of arq.ArqRedis we use — only ``enqueue_job``."""
 
@@ -78,6 +84,40 @@ def run_dir_for(cfg: LakehouseConfig, job_id: str) -> Path:
 def log_path_for(cfg: LakehouseConfig, job_id: str) -> Path:
     """Per-run log file under ``cfg.paths.logs``."""
     return Path(cfg.paths.logs) / f"{job_id}.log"
+
+
+def init_log_file(path: Path, job_id: str, notebook_path: str) -> None:
+    """Create the log file with a header before execution starts.
+
+    Idempotent: if the file already exists it is left alone so a re-entrant
+    runner doesn't truncate live output.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        return
+    ts = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    header = (
+        f"=== locallake run ===\njob_id: {job_id}\nnotebook: {notebook_path}\nstarted: {ts}\n---\n"
+    )
+    path.write_text(header, encoding="utf-8")
+
+
+def append_log_block(path: Path, label: str, body: str) -> None:
+    """Append a labeled block (e.g. ``[stdout]``) to a run log file."""
+    if not body:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = body if body.endswith("\n") else body + "\n"
+    with open(path, "a", encoding="utf-8") as fh:
+        fh.write(f"[{label}]\n{text}")
+
+
+def append_log_footer(path: Path, status: str) -> None:
+    """Append the terminal footer that the WebSocket tailer keys on."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    with open(path, "a", encoding="utf-8") as fh:
+        fh.write(f"---\n{LOG_FOOTER_SENTINEL} status={status} at={ts}\n")
 
 
 async def submit_job(

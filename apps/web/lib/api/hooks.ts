@@ -8,6 +8,9 @@ export type NotebookEntry = components["schemas"]["NotebookEntryOut"];
 export type NotebookList = components["schemas"]["NotebookListOut"];
 export type NotebookDetail = components["schemas"]["NotebookDetailOut"];
 export type RunNotebookRequest = components["schemas"]["RunNotebookRequest"];
+export type ArtifactEntry = components["schemas"]["ArtifactEntryOut"];
+export type ArtifactList = components["schemas"]["ArtifactListOut"];
+export type ArtifactPreview = components["schemas"]["ArtifactPreviewOut"];
 
 const JOBS_POLL_MS = 3000;
 
@@ -121,6 +124,20 @@ export function useRunNotebook() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["jobs"] });
+    },
+  });
+}
+
+export function useArtifacts(jobId: string | null) {
+  return useQuery({
+    queryKey: ["artifacts", jobId],
+    enabled: !!jobId,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/jobs/{job_id}/artifacts", {
+        params: { path: { job_id: jobId! } },
+      });
+      if (error) throw error;
+      return data!;
     },
   });
 }

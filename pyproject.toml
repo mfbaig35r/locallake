@@ -46,6 +46,7 @@ ignore = []
 ]
 # FastAPI Depends(...) in default args is the framework's documented pattern
 "apps/api/src/locallake_api/routes/*.py" = ["B008"]
+"apps/api/src/locallake_api/websocket.py" = ["B008"]
 
 [tool.mypy]
 python_version = "3.12"

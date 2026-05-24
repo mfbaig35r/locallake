@@ -18,7 +18,8 @@ from arq.connections import RedisSettings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from locallake_api.routes import jobs, notebooks
+from locallake_api import websocket
+from locallake_api.routes import artifacts, jobs, notebooks
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,8 @@ app.add_middleware(
 
 app.include_router(notebooks.router)
 app.include_router(jobs.router)
+app.include_router(artifacts.router)
+app.include_router(websocket.router)
 
 
 @app.get("/health")

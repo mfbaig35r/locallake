@@ -4,6 +4,8 @@ import { ChevronLeft, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
+import { ArtifactsList } from "@/components/jobs/artifacts-list";
+import { LogStream } from "@/components/jobs/log-stream";
 import { StatusBadge } from "@/components/jobs/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -149,9 +151,23 @@ export default function JobDetailPage() {
         </Card>
       ) : null}
 
-      <p className="text-xs text-muted-foreground">
-        Live log streaming + artifact preview land in Phase 3.
-      </p>
+      <Card>
+        <CardHeader>
+          <CardTitle>Logs</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <LogStream jobId={data.id} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Artifacts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ArtifactsList jobId={data.id} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

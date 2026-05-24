@@ -85,6 +85,7 @@ def _seed_run(factory: Any, *, notebook_path: str, status: str = "queued") -> st
 def test_execute_job_success_path(
     cfg: LakehouseConfig, factory: Any, fake_marimo_sandbox: MagicMock
 ) -> None:
+    from locallake_core.runs import LOG_FOOTER_SENTINEL, log_path_for
     from locallake_worker.runner import execute_job
 
     (Path(cfg.paths.notebooks) / "nb.py").write_text("# nb body\nprint(1)\n")
@@ -101,6 +102,12 @@ def test_execute_job_success_path(
     out = execute_job(cfg, factory, job_id)
     assert out["status"] == "success"
     assert out["mcp_run_id"] == "marimo-abc"
+
+    log_text = log_path_for(cfg, job_id).read_text(encoding="utf-8")
+    assert "=== locallake run ===" in log_text
+    assert "[stdout]" in log_text
+    assert "hello" in log_text
+    assert f"{LOG_FOOTER_SENTINEL} status=success" in log_text
 
     # marimo_sandbox call inspection — verifies context was injected + env set
     call = fake_marimo_sandbox.call_args
@@ -170,6 +177,7 @@ def test_execute_job_skips_pre_cancelled(
 def test_execute_job_404_for_missing_notebook(
     cfg: LakehouseConfig, factory: Any, fake_marimo_sandbox: MagicMock
 ) -> None:
+    from locallake_core.runs import log_path_for
     from locallake_worker.runner import execute_job
 
     job_id = _seed_run(factory, notebook_path="ghost.py")
@@ -186,6 +194,12 @@ def test_execute_job_404_for_missing_notebook(
         assert "not found" in r.error_message
     finally:
         s.close()
+
+    # Even the missing-notebook path writes a log with a footer so the WS
+    # tailer can close cleanly.
+    log_text = log_path_for(cfg, job_id).read_text(encoding="utf-8")
+    assert "notebook file not found" in log_text
+    assert "status=failed" in log_text
 
 
 def test_execute_job_restores_env_after_call(

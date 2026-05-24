@@ -22,7 +22,15 @@ from typing import Any
 from locallake_core.config import LakehouseConfig
 from locallake_core.context import inject_context, required_packages
 from locallake_core.models import JobRun
-from locallake_core.runs import log_path_for, mark_finished, mark_started, run_dir_for
+from locallake_core.runs import (
+    append_log_block,
+    append_log_footer,
+    init_log_file,
+    log_path_for,
+    mark_finished,
+    mark_started,
+    run_dir_for,
+)
 from sqlalchemy.orm import Session, sessionmaker
 
 logger = logging.getLogger(__name__)
@@ -78,22 +86,24 @@ def execute_job(
 
     notebooks_root = Path(cfg.paths.notebooks).resolve()
     nb_full = (notebooks_root / run.notebook_path).resolve()
+    artifacts_dir = run_dir_for(cfg, job_id)
+    log_path = log_path_for(cfg, job_id)
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    init_log_file(log_path, job_id, run.notebook_path)
+
     if not nb_full.is_file():
+        append_log_block(log_path, "error", f"notebook file not found: {run.notebook_path}")
+        append_log_footer(log_path, "failed")
         mark_finished(
             session_factory,
             job_id,
             status="failed",
             mcp_run_id=None,
             error_message=f"notebook file not found: {run.notebook_path}",
-            artifact_path=None,
-            log_path=None,
+            artifact_path=str(artifacts_dir),
+            log_path=str(log_path),
         )
         raise FileNotFoundError(nb_full)
-
-    artifacts_dir = run_dir_for(cfg, job_id)
-    log_path = log_path_for(cfg, job_id)
-    artifacts_dir.mkdir(parents=True, exist_ok=True)
-    log_path.parent.mkdir(parents=True, exist_ok=True)
 
     user_code = nb_full.read_text(encoding="utf-8")
     code = inject_context(user_code)
@@ -125,6 +135,18 @@ def execute_job(
     raw_status = result.get("status", "")
     mapped = _map_marimo_status(raw_status)
     err = result.get("error") or result.get("stderr") if mapped != "success" else None
+
+    # Tee captured stdout/stderr from marimo-sandbox into the run log. marimo
+    # buffers both via subprocess.PIPE and only releases them when the run
+    # completes, so users see __lake__.log() output live and print() lines as
+    # one block at the end.
+    stdout = result.get("stdout") or ""
+    stderr = result.get("stderr") or ""
+    if isinstance(stdout, str) and stdout.strip():
+        append_log_block(log_path, "stdout", stdout)
+    if isinstance(stderr, str) and stderr.strip():
+        append_log_block(log_path, "stderr", stderr)
+    append_log_footer(log_path, mapped)
 
     mark_finished(
         session_factory,

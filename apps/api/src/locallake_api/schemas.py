@@ -69,3 +69,22 @@ class NotebookDetailOut(BaseModel):
     size_bytes: int
     last_modified: datetime
     recent_runs: list[JobRunOut]
+
+
+class ArtifactEntryOut(BaseModel):
+    path: str
+    size_bytes: int
+    last_modified: datetime
+    previewable: bool
+
+
+class ArtifactListOut(BaseModel):
+    items: list[ArtifactEntryOut]
+    total: int
+
+
+class ArtifactPreviewOut(BaseModel):
+    columns: list[str]
+    rows: list[list[Any]]
+    total_rows: int
+    truncated: bool
