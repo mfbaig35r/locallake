@@ -11,6 +11,13 @@ export type RunNotebookRequest = components["schemas"]["RunNotebookRequest"];
 export type ArtifactEntry = components["schemas"]["ArtifactEntryOut"];
 export type ArtifactList = components["schemas"]["ArtifactListOut"];
 export type ArtifactPreview = components["schemas"]["ArtifactPreviewOut"];
+export type QueryRequest = components["schemas"]["QueryRequest"];
+export type QueryResult = components["schemas"]["QueryResultOut"];
+export type SavedQuery = components["schemas"]["SavedQueryOut"];
+export type SavedQueryIn = components["schemas"]["SavedQueryIn"];
+export type QueryHistoryEntry = components["schemas"]["QueryHistoryOut"];
+export type TableEntry = components["schemas"]["TableEntryOut"];
+export type TableDetail = components["schemas"]["TableDetailOut"];
 
 const JOBS_POLL_MS = 3000;
 
@@ -124,6 +131,91 @@ export function useRunNotebook() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["jobs"] });
+    },
+  });
+}
+
+export function useRunQuery() {
+  return useMutation({
+    mutationFn: async (body: QueryRequest) => {
+      const { data, error } = await api.POST("/sql/query", { body });
+      if (error) throw error;
+      return data!;
+    },
+  });
+}
+
+export function useSavedQueries() {
+  return useQuery({
+    queryKey: ["sql", "saved"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/sql/saved");
+      if (error) throw error;
+      return data!;
+    },
+  });
+}
+
+export function useCreateSavedQuery() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: SavedQueryIn) => {
+      const { data, error } = await api.POST("/sql/saved", { body });
+      if (error) throw error;
+      return data!;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sql", "saved"] }),
+  });
+}
+
+export function useDeleteSavedQuery() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await api.DELETE("/sql/saved/{saved_id}", {
+        params: { path: { saved_id: id } },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sql", "saved"] }),
+  });
+}
+
+export function useQueryHistory(limit = 50) {
+  return useQuery({
+    queryKey: ["sql", "history", limit],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/sql/history", {
+        params: { query: { limit } },
+      });
+      if (error) throw error;
+      return data!;
+    },
+  });
+}
+
+export function useCatalogTables() {
+  return useQuery({
+    queryKey: ["catalog", "tables"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/catalog/tables");
+      if (error) throw error;
+      return data!;
+    },
+  });
+}
+
+export function useTableDetail(schema: string | null, name: string | null) {
+  return useQuery({
+    queryKey: ["catalog", "tables", schema, name],
+    enabled: !!schema && !!name,
+    queryFn: async () => {
+      const { data, error } = await api.GET(
+        "/catalog/tables/{schema_name}/{name}",
+        { params: { path: { schema_name: schema!, name: name! } } }
+      );
+      if (error) throw error;
+      return data!;
     },
   });
 }

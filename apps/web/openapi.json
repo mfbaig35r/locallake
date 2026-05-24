@@ -453,6 +453,271 @@
         }
       }
     },
+    "/sql/query": {
+      "post": {
+        "tags": [
+          "sql"
+        ],
+        "summary": "Query",
+        "operationId": "query_sql_query_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResultOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sql/saved": {
+      "get": {
+        "tags": [
+          "sql"
+        ],
+        "summary": "List Saved",
+        "operationId": "list_saved_sql_saved_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedQueryListOut"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sql"
+        ],
+        "summary": "Create Saved",
+        "operationId": "create_saved_sql_saved_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavedQueryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedQueryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sql/saved/{saved_id}": {
+      "delete": {
+        "tags": [
+          "sql"
+        ],
+        "summary": "Delete Saved",
+        "operationId": "delete_saved_sql_saved__saved_id__delete",
+        "parameters": [
+          {
+            "name": "saved_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Saved Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sql/history": {
+      "get": {
+        "tags": [
+          "sql"
+        ],
+        "summary": "List History",
+        "operationId": "list_history_sql_history_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryHistoryListOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalog/tables": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "List Tables Endpoint",
+        "operationId": "list_tables_endpoint_catalog_tables_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableListOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalog/tables/{schema_name}/{name}": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Get Table Detail",
+        "operationId": "get_table_detail_catalog_tables__schema_name___name__get",
+        "parameters": [
+          {
+            "name": "schema_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Schema Name"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "sample_rows",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 0,
+              "default": 50,
+              "title": "Sample Rows"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableDetailOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health",
@@ -585,6 +850,29 @@
           "message"
         ],
         "title": "CancelResponse"
+      },
+      "ColumnEntryOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "nullable": {
+            "type": "boolean",
+            "title": "Nullable"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "nullable"
+        ],
+        "title": "ColumnEntryOut"
       },
       "HTTPValidationError": {
         "properties": {
@@ -888,6 +1176,149 @@
         ],
         "title": "NotebookListOut"
       },
+      "QueryHistoryListOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/QueryHistoryOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "QueryHistoryListOut"
+      },
+      "QueryHistoryOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "sql": {
+            "type": "string",
+            "title": "Sql"
+          },
+          "executed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Executed At"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "title": "Duration Ms"
+          },
+          "row_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row Count"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sql",
+          "executed_at",
+          "duration_ms",
+          "row_count",
+          "error_message"
+        ],
+        "title": "QueryHistoryOut"
+      },
+      "QueryRequest": {
+        "properties": {
+          "sql": {
+            "type": "string",
+            "maxLength": 200000,
+            "minLength": 1,
+            "title": "Sql"
+          },
+          "row_limit": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Row Limit",
+            "default": 1000
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "maximum": 300.0,
+            "minimum": 1.0,
+            "title": "Timeout Seconds",
+            "default": 30
+          }
+        },
+        "type": "object",
+        "required": [
+          "sql"
+        ],
+        "title": "QueryRequest"
+      },
+      "QueryResultOut": {
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "rows": {
+            "items": {
+              "items": {},
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "row_count": {
+            "type": "integer",
+            "title": "Row Count"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "title": "Duration Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "columns",
+          "rows",
+          "row_count",
+          "truncated",
+          "duration_ms"
+        ],
+        "title": "QueryResultOut"
+      },
       "RunNotebookRequest": {
         "properties": {
           "parameters": {
@@ -911,6 +1342,188 @@
         },
         "type": "object",
         "title": "RunNotebookRequest"
+      },
+      "SavedQueryIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "sql": {
+            "type": "string",
+            "maxLength": 200000,
+            "minLength": 1,
+            "title": "Sql"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "sql"
+        ],
+        "title": "SavedQueryIn"
+      },
+      "SavedQueryListOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SavedQueryOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "SavedQueryListOut"
+      },
+      "SavedQueryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "sql": {
+            "type": "string",
+            "title": "Sql"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "sql",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SavedQueryOut"
+      },
+      "TableDetailOut": {
+        "properties": {
+          "schema": {
+            "type": "string",
+            "title": "Schema"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/ColumnEntryOut"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "row_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row Count"
+          },
+          "sample_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sample Columns"
+          },
+          "sample_rows": {
+            "items": {
+              "items": {},
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Sample Rows"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schema",
+          "name",
+          "kind",
+          "columns",
+          "row_count",
+          "sample_columns",
+          "sample_rows"
+        ],
+        "title": "TableDetailOut"
+      },
+      "TableEntryOut": {
+        "properties": {
+          "schema": {
+            "type": "string",
+            "title": "Schema"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schema",
+          "name",
+          "kind"
+        ],
+        "title": "TableEntryOut"
+      },
+      "TableListOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TableEntryOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "TableListOut"
       },
       "ValidationError": {
         "properties": {

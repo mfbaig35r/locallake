@@ -157,6 +157,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sql/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Query */
+        post: operations["query_sql_query_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sql/saved": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Saved */
+        get: operations["list_saved_sql_saved_get"];
+        put?: never;
+        /** Create Saved */
+        post: operations["create_saved_sql_saved_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sql/saved/{saved_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Saved */
+        delete: operations["delete_saved_sql_saved__saved_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sql/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List History */
+        get: operations["list_history_sql_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalog/tables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Tables Endpoint */
+        get: operations["list_tables_endpoint_catalog_tables_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalog/tables/{schema_name}/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Table Detail */
+        get: operations["get_table_detail_catalog_tables__schema_name___name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -218,6 +321,15 @@ export interface components {
             status: string;
             /** Message */
             message: string;
+        };
+        /** ColumnEntryOut */
+        ColumnEntryOut: {
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+            /** Nullable */
+            nullable: boolean;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -314,6 +426,59 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** QueryHistoryListOut */
+        QueryHistoryListOut: {
+            /** Items */
+            items: components["schemas"]["QueryHistoryOut"][];
+            /** Total */
+            total: number;
+        };
+        /** QueryHistoryOut */
+        QueryHistoryOut: {
+            /** Id */
+            id: number;
+            /** Sql */
+            sql: string;
+            /**
+             * Executed At
+             * Format: date-time
+             */
+            executed_at: string;
+            /** Duration Ms */
+            duration_ms: number;
+            /** Row Count */
+            row_count: number | null;
+            /** Error Message */
+            error_message: string | null;
+        };
+        /** QueryRequest */
+        QueryRequest: {
+            /** Sql */
+            sql: string;
+            /**
+             * Row Limit
+             * @default 1000
+             */
+            row_limit: number;
+            /**
+             * Timeout Seconds
+             * @default 30
+             */
+            timeout_seconds: number;
+        };
+        /** QueryResultOut */
+        QueryResultOut: {
+            /** Columns */
+            columns: string[];
+            /** Rows */
+            rows: unknown[][];
+            /** Row Count */
+            row_count: number;
+            /** Truncated */
+            truncated: boolean;
+            /** Duration Ms */
+            duration_ms: number;
+        };
         /** RunNotebookRequest */
         RunNotebookRequest: {
             /** Parameters */
@@ -330,6 +495,72 @@ export interface components {
              * @default api
              */
             triggered_by: string;
+        };
+        /** SavedQueryIn */
+        SavedQueryIn: {
+            /** Name */
+            name: string;
+            /** Sql */
+            sql: string;
+        };
+        /** SavedQueryListOut */
+        SavedQueryListOut: {
+            /** Items */
+            items: components["schemas"]["SavedQueryOut"][];
+            /** Total */
+            total: number;
+        };
+        /** SavedQueryOut */
+        SavedQueryOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Sql */
+            sql: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** TableDetailOut */
+        TableDetailOut: {
+            /** Schema */
+            schema: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Columns */
+            columns: components["schemas"]["ColumnEntryOut"][];
+            /** Row Count */
+            row_count: number | null;
+            /** Sample Columns */
+            sample_columns: string[];
+            /** Sample Rows */
+            sample_rows: unknown[][];
+        };
+        /** TableEntryOut */
+        TableEntryOut: {
+            /** Schema */
+            schema: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+        };
+        /** TableListOut */
+        TableListOut: {
+            /** Items */
+            items: components["schemas"]["TableEntryOut"][];
+            /** Total */
+            total: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -619,6 +850,206 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    query_sql_query_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryResultOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_saved_sql_saved_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedQueryListOut"];
+                };
+            };
+        };
+    };
+    create_saved_sql_saved_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavedQueryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedQueryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_saved_sql_saved__saved_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                saved_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_history_sql_history_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryHistoryListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_tables_endpoint_catalog_tables_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TableListOut"];
+                };
+            };
+        };
+    };
+    get_table_detail_catalog_tables__schema_name___name__get: {
+        parameters: {
+            query?: {
+                sample_rows?: number;
+            };
+            header?: never;
+            path: {
+                schema_name: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TableDetailOut"];
                 };
             };
             /** @description Validation Error */
