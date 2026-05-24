@@ -7,7 +7,6 @@ UI). Parquet artifacts render as a previewable table.
 
 import marimo
 
-__generated_with = "0.10.0"
 app = marimo.App()
 
 

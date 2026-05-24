@@ -7,7 +7,6 @@ Run via the UI (click Run on the notebook detail page) or:
 
 import marimo
 
-__generated_with = "0.10.0"
 app = marimo.App()
 
 
@@ -28,8 +27,7 @@ def _(log):
 def _(get_connection):
     con = get_connection()
     con.execute(
-        "CREATE TABLE IF NOT EXISTS demo_hello "
-        "(run_at TIMESTAMP DEFAULT now(), msg VARCHAR)"
+        "CREATE TABLE IF NOT EXISTS demo_hello (run_at TIMESTAMP DEFAULT now(), msg VARCHAR)"
     )
     con.execute("INSERT INTO demo_hello (msg) VALUES (?)", ["phase 1 demo"])
     return (con,)

@@ -16,6 +16,10 @@ dependencies = [
     # it in the API venv.
     "marimo>=0.10.0",
     "locallake-core",
+    # The `locallake` shim has to be importable inside the marimo-edit kernel,
+    # otherwise notebooks that do `from locallake import ...` trigger marimo's
+    # "kernel not found" banner because the imports can't be resolved.
+    "locallake",
 ]
 
 [build-system]

@@ -7,7 +7,6 @@ UI). Parquet artifacts render as a previewable table.
 
 import marimo
 
-__generated_with = "0.10.0"
 app = marimo.App()
 
 
@@ -46,9 +45,7 @@ def _(get_connection, log, out_path, query):
 
 @app.cell
 def _(con, filename, log, out_path):
-    (row_count,) = con.execute(
-        "SELECT COUNT(*) FROM read_parquet(?)", [str(out_path)]
-    ).fetchone()
+    (row_count,) = con.execute("SELECT COUNT(*) FROM read_parquet(?)", [str(out_path)]).fetchone()
     log(f"wrote {row_count} rows to {filename}")
     print(f"wrote {row_count} rows to artifacts/{filename}")
     return

@@ -7,7 +7,6 @@ root). DuckDB's ``read_csv_auto`` handles header inference + type detection.
 
 import marimo
 
-__generated_with = "0.10.0"
 app = marimo.App()
 
 
