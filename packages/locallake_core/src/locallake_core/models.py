@@ -64,6 +64,7 @@ class Schedule(Base):
     last_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_utc_now)
     parameters_json: Mapped[str] = mapped_column(Text, default="{}")
+    max_retries: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class SavedQuery(Base):

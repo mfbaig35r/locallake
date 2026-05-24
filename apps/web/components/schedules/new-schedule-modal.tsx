@@ -26,6 +26,7 @@ export function NewScheduleModal({
   const [cron, setCron] = useState<string>("0 * * * *");
   const [paramsText, setParamsText] = useState<string>("{}");
   const [enabled, setEnabled] = useState<boolean>(true);
+  const [maxRetries, setMaxRetries] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export function NewScheduleModal({
     setCron("0 * * * *");
     setParamsText("{}");
     setEnabled(true);
+    setMaxRetries(0);
     if (initialNotebookPath) {
       setNotebookPath(initialNotebookPath);
     } else {
@@ -64,6 +66,7 @@ export function NewScheduleModal({
         cron_expression: cron,
         parameters,
         enabled,
+        max_retries: maxRetries,
       });
       onCreated?.(result.id);
       onClose();
@@ -164,6 +167,23 @@ export function NewScheduleModal({
               className="h-3.5 w-3.5"
             />
             Enabled
+          </label>
+
+          <label className="block space-y-1">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">
+              Max retries
+            </span>
+            <Input
+              type="number"
+              min={0}
+              max={10}
+              value={maxRetries}
+              onChange={(e) => setMaxRetries(Number(e.target.value) || 0)}
+              className="w-24 font-mono text-sm"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              On failure, the worker enqueues up to N retries (60s apart). 0 = no retries.
+            </p>
           </label>
 
           {error ? (

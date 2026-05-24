@@ -141,6 +141,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/jobs/{job_id}/artifacts/{artifact_path}/raw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Raw Artifact
+         * @description Serve raw bytes with a content-type hint — used for inline image previews.
+         *
+         *     Identical to the download endpoint except for the media_type: images return
+         *     e.g. `image/png` so browsers can render them in an ``<img>`` tag instead of
+         *     triggering a download.
+         */
+        get: operations["raw_artifact_jobs__job_id__artifacts__artifact_path__raw_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/jobs/{job_id}/artifacts/{artifact_path}/preview": {
         parameters: {
             query?: never;
@@ -694,6 +718,11 @@ export interface components {
              * @default true
              */
             enabled: boolean;
+            /**
+             * Max Retries
+             * @default 0
+             */
+            max_retries: number;
         };
         /** ScheduleListOut */
         ScheduleListOut: {
@@ -725,6 +754,8 @@ export interface components {
             parameters_json: string;
             /** Next Fire At */
             next_fire_at: string | null;
+            /** Max Retries */
+            max_retries: number;
         };
         /** ScheduleUpdate */
         ScheduleUpdate: {
@@ -736,6 +767,8 @@ export interface components {
             } | null;
             /** Enabled */
             enabled?: boolean | null;
+            /** Max Retries */
+            max_retries?: number | null;
         };
         /** TableDetailOut */
         TableDetailOut: {
@@ -1092,6 +1125,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArtifactListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    raw_artifact_jobs__job_id__artifacts__artifact_path__raw_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+                artifact_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

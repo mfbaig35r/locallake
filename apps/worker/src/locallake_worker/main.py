@@ -22,6 +22,7 @@ from arq.connections import RedisSettings
 from locallake_core.config import LakehouseConfig
 from locallake_core.db import make_session_factory
 
+from locallake_worker.retry import maybe_retry
 from locallake_worker.runner import execute_job
 from locallake_worker.scheduler import run_loop
 
@@ -31,7 +32,16 @@ logger = logging.getLogger(__name__)
 async def run_notebook(ctx: dict[str, Any], job_id: str) -> dict[str, Any]:
     cfg: LakehouseConfig = ctx["lake_config"]
     factory = ctx["session_factory"]
-    return await asyncio.to_thread(execute_job, cfg, factory, job_id)
+    pool = ctx["redis"]
+    result = await asyncio.to_thread(execute_job, cfg, factory, job_id)
+    if result.get("status") == "failed":
+        try:
+            retry_id = await maybe_retry(cfg, factory, pool, job_id)
+            if retry_id is not None:
+                result["retry_job_id"] = retry_id
+        except Exception:
+            logger.exception("maybe_retry failed for %s", job_id)
+    return result
 
 
 async def on_startup(ctx: dict[str, Any]) -> None:

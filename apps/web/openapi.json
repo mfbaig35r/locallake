@@ -436,6 +436,56 @@
         }
       }
     },
+    "/jobs/{job_id}/artifacts/{artifact_path}/raw": {
+      "get": {
+        "tags": [
+          "artifacts"
+        ],
+        "summary": "Raw Artifact",
+        "description": "Serve raw bytes with a content-type hint \u2014 used for inline image previews.\n\nIdentical to the download endpoint except for the media_type: images return\ne.g. `image/png` so browsers can render them in an ``<img>`` tag instead of\ntriggering a download.",
+        "operationId": "raw_artifact_jobs__job_id__artifacts__artifact_path__raw_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "artifact_path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Artifact Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/jobs/{job_id}/artifacts/{artifact_path}/preview": {
       "get": {
         "tags": [
@@ -1900,6 +1950,13 @@
             "type": "boolean",
             "title": "Enabled",
             "default": true
+          },
+          "max_retries": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Max Retries",
+            "default": 0
           }
         },
         "type": "object",
@@ -1991,6 +2048,10 @@
               }
             ],
             "title": "Next Fire At"
+          },
+          "max_retries": {
+            "type": "integer",
+            "title": "Max Retries"
           }
         },
         "type": "object",
@@ -2003,7 +2064,8 @@
           "last_run_id",
           "created_at",
           "parameters_json",
-          "next_fire_at"
+          "next_fire_at",
+          "max_retries"
         ],
         "title": "ScheduleOut"
       },
@@ -2044,6 +2106,19 @@
               }
             ],
             "title": "Enabled"
+          },
+          "max_retries": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Retries"
           }
         },
         "type": "object",

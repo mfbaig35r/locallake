@@ -33,7 +33,21 @@ router = APIRouter(prefix="/jobs", tags=["artifacts"])
 # Preview limits — keep payloads small and bounded.
 _PREVIEW_MAX_ROWS = 100
 _PREVIEW_MAX_FILE_BYTES = 50 * 1024 * 1024  # 50 MiB
-_PREVIEWABLE_SUFFIXES = {".parquet"}
+
+# Parquet → /preview returns JSON with columns+rows.
+_PARQUET_SUFFIXES = {".parquet"}
+# Images → /raw returns the bytes; UI renders inline via <img>.
+_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"}
+_PREVIEWABLE_SUFFIXES = _PARQUET_SUFFIXES | _IMAGE_SUFFIXES
+
+_IMAGE_MIME = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+}
 
 
 def _resolve_artifact_root(
@@ -90,6 +104,27 @@ async def list_artifacts(
     return ArtifactListOut(items=items, total=len(items))
 
 
+@router.get("/{job_id}/artifacts/{artifact_path:path}/raw")
+async def raw_artifact(
+    job_id: str,
+    artifact_path: str,
+    cfg: LakehouseConfig = Depends(get_config),
+    factory: Any = Depends(get_session_factory),
+) -> FileResponse:
+    """Serve raw bytes with a content-type hint — used for inline image previews.
+
+    Identical to the download endpoint except for the media_type: images return
+    e.g. `image/png` so browsers can render them in an ``<img>`` tag instead of
+    triggering a download.
+    """
+    root = _resolve_artifact_root(cfg, factory, job_id)
+    full = _resolve_under(root, artifact_path)
+    if not full.is_file():
+        raise HTTPException(404, f"artifact not found: {artifact_path}")
+    media_type = _IMAGE_MIME.get(full.suffix.lower(), "application/octet-stream")
+    return FileResponse(path=str(full), filename=full.name, media_type=media_type)
+
+
 @router.get("/{job_id}/artifacts/{artifact_path:path}/preview", response_model=ArtifactPreviewOut)
 async def preview_artifact(
     job_id: str,
@@ -102,8 +137,9 @@ async def preview_artifact(
     full = _resolve_under(root, artifact_path)
     if not full.is_file():
         raise HTTPException(404, f"artifact not found: {artifact_path}")
-    if full.suffix.lower() not in _PREVIEWABLE_SUFFIXES:
-        raise HTTPException(415, f"no preview for suffix {full.suffix!r}")
+    # The /preview endpoint is parquet-only — images use /raw + an <img> tag.
+    if full.suffix.lower() not in _PARQUET_SUFFIXES:
+        raise HTTPException(415, f"no row-preview for suffix {full.suffix!r}")
     if full.stat().st_size > _PREVIEW_MAX_FILE_BYTES:
         raise HTTPException(413, "artifact too large to preview")
 

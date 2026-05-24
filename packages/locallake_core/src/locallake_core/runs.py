@@ -129,8 +129,16 @@ async def submit_job(
     parameters: dict[str, Any] | None = None,
     triggered_by: str = "api",
     timeout_seconds: int = 300,
+    parent_run_id: str | None = None,
+    schedule_id: str | None = None,
+    defer_seconds: int = 0,
 ) -> JobRun:
-    """Validate notebook, capture git state, insert JobRun, enqueue arq task."""
+    """Validate notebook, capture git state, insert JobRun, enqueue arq task.
+
+    ``parent_run_id`` + ``schedule_id`` are set by the schedule-driven retry
+    path so the parent chain is walkable. ``defer_seconds`` delays the arq
+    enqueue (used to space out retries).
+    """
     full = resolve_notebook_path(cfg, notebook_path)
 
     git_sha, git_dirty = get_git_info(cfg.workspace.root_path)
@@ -144,6 +152,8 @@ async def submit_job(
         git_dirty=git_dirty,
         parameters_json=json.dumps(parameters or {}),
         timeout_seconds=timeout_seconds,
+        parent_run_id=parent_run_id,
+        schedule_id=schedule_id,
     )
 
     session = session_factory()
@@ -155,8 +165,19 @@ async def submit_job(
     finally:
         session.close()
 
-    await pool.enqueue_job("run_notebook", run_id)
-    logger.info("submitted job %s for notebook %s", run_id, notebook_path)
+    if defer_seconds > 0:
+        # arq accepts `_defer_by` (timedelta or seconds) for delayed enqueue.
+        await pool.enqueue_job("run_notebook", run_id, _defer_by=defer_seconds)
+    else:
+        await pool.enqueue_job("run_notebook", run_id)
+    logger.info(
+        "submitted job %s for notebook %s (parent=%s, schedule=%s, defer=%ss)",
+        run_id,
+        notebook_path,
+        parent_run_id,
+        schedule_id,
+        defer_seconds,
+    )
     return run
 
 

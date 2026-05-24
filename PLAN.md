@@ -419,6 +419,13 @@ These are tagged because they will get asked for. The data model + interfaces sh
 - **Remote workers** — single-machine for now; queue is Redis so this is technically possible later
 - **Webhook triggers for jobs** — easy add to arq once the basic flow ships
 
+### From Phase 7 hardening — deferred
+
+- **True notebook output rendering (matplotlib/plotly auto-capture).** v1 ships image artifact preview for files the user explicitly saves via `__lake__.save_artifact("chart.png", ...)`. Auto-capturing `plt.show()` / `fig.show()` calls requires intercepting marimo-sandbox's output sidecar JSON (see `_impl_get_run_outputs`) and translating the `__outputs__` dict into our artifacts grid. Doable but the cost/benefit isn't there until users ask. Suffix support is already broad (png/jpg/jpeg/gif/svg/webp).
+- **Manual-run retry policy.** v1 retries only schedule-triggered runs. Manual runs need a design call on where `max_retries` lives — submit-time API param? Notebook frontmatter (`# locallake: max_retries = 3`)? Settings page default? Punt until someone hits the pain.
+- **Multi-worker priority queues.** `LOCALLAKE_WORKER_CONCURRENCY` env var already supports parallel runs from a single worker process. Explicit high/low priority queues (e.g. "interactive runs preempt scheduled ones") need a concrete motivating workload before designing the routing.
+- **Subprocess-kill for cancel on running jobs.** Today's cancel only works pre-execution; running jobs return 409. Needs the worker to track marimo-sandbox PIDs by job_id and propagate SIGTERM, then handle the partial-output flush.
+
 ---
 
 ## 12. Open implementation questions

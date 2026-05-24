@@ -143,3 +143,42 @@ def test_preview_415_for_non_parquet(
     (root / "notes.txt").write_text("plain")
     res = client.get(f"/jobs/{job_id}/artifacts/notes.txt/preview")
     assert res.status_code == 415
+
+
+def test_list_marks_images_as_previewable(
+    client: Any, session_factory: Any, lake_config: LakehouseConfig
+) -> None:
+    job_id = _seed_run(session_factory)
+    root = _artifact_root(lake_config, job_id)
+    (root / "chart.png").write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 20)
+    (root / "notes.txt").write_text("plain")
+    res = client.get(f"/jobs/{job_id}/artifacts")
+    by_path = {it["path"]: it for it in res.json()["items"]}
+    assert by_path["chart.png"]["previewable"] is True
+    assert by_path["notes.txt"]["previewable"] is False
+
+
+def test_raw_image_returns_correct_mime(
+    client: Any, session_factory: Any, lake_config: LakehouseConfig
+) -> None:
+    job_id = _seed_run(session_factory)
+    root = _artifact_root(lake_config, job_id)
+    body = b"\x89PNG\r\n\x1a\nbody"
+    (root / "chart.png").write_bytes(body)
+    res = client.get(f"/jobs/{job_id}/artifacts/chart.png/raw")
+    assert res.status_code == 200
+    assert res.headers["content-type"].startswith("image/png")
+    assert res.content == body
+
+
+def test_preview_415_for_image(
+    client: Any, session_factory: Any, lake_config: LakehouseConfig
+) -> None:
+    """Image suffixes are previewable in the list, but /preview is parquet-only.
+    The UI dispatches images to /raw + an <img> instead.
+    """
+    job_id = _seed_run(session_factory)
+    root = _artifact_root(lake_config, job_id)
+    (root / "chart.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+    res = client.get(f"/jobs/{job_id}/artifacts/chart.png/preview")
+    assert res.status_code == 415

@@ -210,12 +210,14 @@ class ScheduleIn(BaseModel):
     cron_expression: str = Field(..., min_length=1, max_length=64)
     parameters: dict[str, Any] = Field(default_factory=dict)
     enabled: bool = True
+    max_retries: int = Field(default=0, ge=0, le=10)
 
 
 class ScheduleUpdate(BaseModel):
     cron_expression: str | None = Field(default=None, min_length=1, max_length=64)
     parameters: dict[str, Any] | None = None
     enabled: bool | None = None
+    max_retries: int | None = Field(default=None, ge=0, le=10)
 
 
 class ScheduleOut(BaseModel):
@@ -229,6 +231,7 @@ class ScheduleOut(BaseModel):
     created_at: datetime
     parameters_json: str
     next_fire_at: datetime | None
+    max_retries: int
 
 
 class ScheduleListOut(BaseModel):

@@ -75,6 +75,7 @@ async def _tick(
                 notebook_path=row.notebook_path,
                 parameters=params,
                 triggered_by="schedule",
+                schedule_id=row.id,
             )
         except Exception:
             logger.exception("schedule %s: submit_job failed", row.id)

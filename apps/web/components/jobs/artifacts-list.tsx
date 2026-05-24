@@ -130,11 +130,43 @@ function Row({
       {isOpen ? (
         <TableRow>
           <TableCell colSpan={4} className="bg-muted/20 p-0">
-            <ParquetPreview jobId={jobId} path={item.path} />
+            {isImage(item.path) ? (
+              <ImagePreview jobId={jobId} path={item.path} />
+            ) : (
+              <ParquetPreview jobId={jobId} path={item.path} />
+            )}
           </TableCell>
         </TableRow>
       ) : null}
     </>
+  );
+}
+
+const IMAGE_SUFFIXES = new Set([
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "svg",
+  "webp",
+]);
+
+function isImage(path: string): boolean {
+  const ext = path.toLowerCase().split(".").pop() ?? "";
+  return IMAGE_SUFFIXES.has(ext);
+}
+
+function ImagePreview({ jobId, path }: { jobId: string; path: string }) {
+  const src = rawUrl(jobId, path);
+  return (
+    <div className="flex justify-center bg-black/30 p-4">
+      {/* eslint-disable-next-line @next/next/no-img-element -- artifacts are arbitrary user-saved files; Next/Image needs a static loader config */}
+      <img
+        src={src}
+        alt={path}
+        className="max-h-[480px] max-w-full rounded border border-border object-contain"
+      />
+    </div>
   );
 }
 
@@ -238,11 +270,17 @@ function FileIcon({ path }: { path: string }) {
 }
 
 function downloadUrl(jobId: string, path: string): string {
+  return artifactUrl(jobId, path, "");
+}
+
+function rawUrl(jobId: string, path: string): string {
+  return artifactUrl(jobId, path, "/raw");
+}
+
+function artifactUrl(jobId: string, path: string, suffix: string): string {
   if (typeof window === "undefined") return "";
   const explicit = process.env.NEXT_PUBLIC_API_URL;
   const base = explicit ?? window.location.origin.replace(":3000", ":8000");
-  return `${base}/jobs/${encodeURIComponent(jobId)}/artifacts/${path
-    .split("/")
-    .map(encodeURIComponent)
-    .join("/")}`;
+  const encoded = path.split("/").map(encodeURIComponent).join("/");
+  return `${base}/jobs/${encodeURIComponent(jobId)}/artifacts/${encoded}${suffix}`;
 }

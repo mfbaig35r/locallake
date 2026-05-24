@@ -52,6 +52,7 @@ def _serialize(s: Schedule) -> ScheduleOut:
         created_at=s.created_at,
         parameters_json=s.parameters_json,
         next_fire_at=upcoming,
+        max_retries=s.max_retries,
     )
 
 
@@ -95,6 +96,7 @@ async def create_schedule(
             enabled=body.enabled,
             created_at=datetime.now(UTC),
             parameters_json=json.dumps(body.parameters),
+            max_retries=body.max_retries,
         )
         session.add(sched)
         session.commit()
@@ -125,6 +127,8 @@ async def update_schedule(
             sched.enabled = body.enabled
         if body.parameters is not None:
             sched.parameters_json = json.dumps(body.parameters)
+        if body.max_retries is not None:
+            sched.max_retries = body.max_retries
         session.commit()
         session.refresh(sched)
         return _serialize(sched)

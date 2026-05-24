@@ -85,10 +85,11 @@ export default function SchedulesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Notebook</TableHead>
-                <TableHead className="w-40">Cron</TableHead>
-                <TableHead className="w-44">Next fire (UTC)</TableHead>
-                <TableHead className="w-36">Last run</TableHead>
-                <TableHead className="w-24">Enabled</TableHead>
+                <TableHead className="w-32">Cron</TableHead>
+                <TableHead className="w-40">Next fire (UTC)</TableHead>
+                <TableHead className="w-32">Last run</TableHead>
+                <TableHead className="w-20">Retries</TableHead>
+                <TableHead className="w-20">Enabled</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
@@ -122,6 +123,9 @@ export default function SchedulesPage() {
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {sched.max_retries}
                   </TableCell>
                   <TableCell>
                     <label className="inline-flex cursor-pointer items-center">
