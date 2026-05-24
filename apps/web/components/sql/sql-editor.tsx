@@ -34,7 +34,7 @@ export function SqlEditor({
         value={value}
         onChange={(v: string | undefined) => onChange(v ?? "")}
         onMount={handleMount}
-        theme="vs-dark"
+        theme="vs"
         options={{
           minimap: { enabled: false },
           scrollBeyondLastLine: false,

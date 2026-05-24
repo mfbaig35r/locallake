@@ -114,7 +114,7 @@ export default function NotebookDetailPage() {
                   href={marimoSession.data.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-9 items-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-md border border-emerald-600/30 bg-emerald-600/10 px-3 text-xs font-medium text-emerald-700 hover:bg-emerald-600/20"
                 >
                   <ExternalLink className="h-3.5 w-3.5" /> Open editor
                 </a>

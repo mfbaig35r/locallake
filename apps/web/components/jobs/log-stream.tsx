@@ -100,7 +100,7 @@ export function LogStream({ jobId }: { jobId: string }) {
 
       <div
         ref={scrollerRef}
-        className="max-h-[420px] min-h-[200px] overflow-auto bg-black/40 px-3 py-2 font-mono text-xs leading-relaxed"
+        className="max-h-[420px] min-h-[200px] overflow-auto bg-muted/40 px-3 py-2 font-mono text-xs leading-relaxed"
       >
         {lines.length === 0 ? (
           <div className="text-muted-foreground">

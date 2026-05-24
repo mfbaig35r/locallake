@@ -55,7 +55,7 @@ function GitPill({
       <span className="font-mono">{status.branch ?? "detached"}</span>
       {status.dirty ? (
         <span
-          className="rounded-sm bg-amber-500/15 px-1 py-0.5 text-[10px] font-medium text-amber-500"
+          className="rounded-sm bg-amber-500/15 px-1 py-0.5 text-[10px] font-medium text-amber-700"
           title="Working tree has uncommitted changes"
         >
           dirty

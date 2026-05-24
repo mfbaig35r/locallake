@@ -159,7 +159,7 @@ function isImage(path: string): boolean {
 function ImagePreview({ jobId, path }: { jobId: string; path: string }) {
   const src = rawUrl(jobId, path);
   return (
-    <div className="flex justify-center bg-black/30 p-4">
+    <div className="flex justify-center bg-muted/40 p-4">
       {/* eslint-disable-next-line @next/next/no-img-element -- artifacts are arbitrary user-saved files; Next/Image needs a static loader config */}
       <img
         src={src}
@@ -263,9 +263,9 @@ function ParquetPreview({ jobId, path }: { jobId: string; path: string }) {
 
 function FileIcon({ path }: { path: string }) {
   const ext = path.toLowerCase().split(".").pop() ?? "";
-  if (ext === "parquet") return <FileBarChart className="h-3.5 w-3.5 text-violet-400" />;
-  if (ext === "json") return <FileJson className="h-3.5 w-3.5 text-amber-400" />;
-  if (ext === "csv" || ext === "tsv") return <FileText className="h-3.5 w-3.5 text-emerald-400" />;
+  if (ext === "parquet") return <FileBarChart className="h-3.5 w-3.5 text-violet-600" />;
+  if (ext === "json") return <FileJson className="h-3.5 w-3.5 text-amber-600" />;
+  if (ext === "csv" || ext === "tsv") return <FileText className="h-3.5 w-3.5 text-emerald-600" />;
   return <File className="h-3.5 w-3.5 text-muted-foreground" />;
 }
 
