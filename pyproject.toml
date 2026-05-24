@@ -32,6 +32,7 @@ dev = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+exclude = ["workspace", ".venv", "**/alembic/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "N", "W", "C4", "SIM"]
@@ -39,6 +40,12 @@ ignore = []
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101"]  # assert in tests is fine
+# context_template.py is exec'd in a subprocess, not imported — unusual patterns expected
+"packages/locallake_core/src/locallake_core/context_template.py" = [
+    "F821", "E402", "F811", "I001", "B905", "S110", "S112", "UP",
+]
+# FastAPI Depends(...) in default args is the framework's documented pattern
+"apps/api/src/locallake_api/routes/*.py" = ["B008"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -46,6 +53,11 @@ strict = true
 warn_return_any = true
 warn_unused_ignores = true
 ignore_missing_imports = true
+exclude = ["workspace/", "alembic/versions/"]
+
+[[tool.mypy.overrides]]
+module = ["locallake_core.context_template"]
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,21 +1,42 @@
 # SPDX-License-Identifier: Apache-2.0
-"""LocalLake FastAPI app — Phase 0 skeleton.
+"""LocalLake FastAPI app.
 
-Only ``/health`` exists. Routes for /jobs, /notebooks, /sql, /catalog,
-/git, /schedules land in subsequent phases.
+Phase 1: ``/health`` plus ``/notebooks/{path:path}/run`` and ``/jobs/*``.
+The Redis pool for arq enqueueing is created on startup and torn down on
+shutdown via the lifespan context.
 """
 
 from __future__ import annotations
 
 import logging
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
+from arq import create_pool
+from arq.connections import RedisSettings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from locallake_api.routes import jobs, notebooks
+
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="LocalLake API", version="0.0.1")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379")
+    pool = await create_pool(RedisSettings.from_dsn(redis_url))
+    app.state.redis = pool
+    logger.info("redis pool ready (%s)", redis_url)
+    try:
+        yield
+    finally:
+        await pool.aclose()
+        logger.info("redis pool closed")
+
+
+app = FastAPI(title="LocalLake API", version="0.0.1", lifespan=lifespan)
 
 _origins = os.environ.get("LOCALLAKE_CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
@@ -25,6 +46,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(notebooks.router)
+app.include_router(jobs.router)
 
 
 @app.get("/health")
