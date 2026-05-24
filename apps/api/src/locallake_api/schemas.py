@@ -203,3 +203,34 @@ class GitCommitOut(BaseModel):
 class GitLogOut(BaseModel):
     items: list[GitCommitOut]
     total: int
+
+
+class ScheduleIn(BaseModel):
+    notebook_path: str = Field(..., min_length=1, max_length=1024)
+    cron_expression: str = Field(..., min_length=1, max_length=64)
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    enabled: bool = True
+
+
+class ScheduleUpdate(BaseModel):
+    cron_expression: str | None = Field(default=None, min_length=1, max_length=64)
+    parameters: dict[str, Any] | None = None
+    enabled: bool | None = None
+
+
+class ScheduleOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    notebook_path: str
+    cron_expression: str
+    enabled: bool
+    last_run_at: datetime | None
+    last_run_id: str | None
+    created_at: datetime
+    parameters_json: str
+    next_fire_at: datetime | None
+
+
+class ScheduleListOut(BaseModel):
+    items: list[ScheduleOut]
+    total: int

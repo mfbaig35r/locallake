@@ -22,6 +22,9 @@ export type TemplateEntry = components["schemas"]["TemplateEntryOut"];
 export type CreateNotebookRequest = components["schemas"]["CreateNotebookRequest"];
 export type GitStatus = components["schemas"]["GitStatusOut"];
 export type GitCommit = components["schemas"]["GitCommitOut"];
+export type Schedule = components["schemas"]["ScheduleOut"];
+export type ScheduleIn = components["schemas"]["ScheduleIn"];
+export type ScheduleUpdate = components["schemas"]["ScheduleUpdate"];
 
 const JOBS_POLL_MS = 3000;
 
@@ -218,6 +221,58 @@ export function useCreateNotebook() {
       return data!;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notebooks"] }),
+  });
+}
+
+export function useSchedules() {
+  return useQuery({
+    queryKey: ["schedules"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/schedules");
+      if (error) throw error;
+      return data!;
+    },
+    refetchInterval: 30_000,
+  });
+}
+
+export function useCreateSchedule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: ScheduleIn) => {
+      const { data, error } = await api.POST("/schedules", { body });
+      if (error) throw error;
+      return data!;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["schedules"] }),
+  });
+}
+
+export function useUpdateSchedule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { id: string; body: ScheduleUpdate }) => {
+      const { data, error } = await api.PATCH("/schedules/{schedule_id}", {
+        params: { path: { schedule_id: args.id } },
+        body: args.body,
+      });
+      if (error) throw error;
+      return data!;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["schedules"] }),
+  });
+}
+
+export function useDeleteSchedule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await api.DELETE("/schedules/{schedule_id}", {
+        params: { path: { schedule_id: id } },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["schedules"] }),
   });
 }
 

@@ -13,6 +13,7 @@ Start with: ``arq locallake_worker.main.WorkerSettings``.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import os
 from typing import Any
@@ -22,6 +23,7 @@ from locallake_core.config import LakehouseConfig
 from locallake_core.db import make_session_factory
 
 from locallake_worker.runner import execute_job
+from locallake_worker.scheduler import run_loop
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +38,21 @@ async def on_startup(ctx: dict[str, Any]) -> None:
     cfg_path = os.environ.get("LOCALLAKE_CONFIG", "config/workspace.yaml")
     ctx["lake_config"] = LakehouseConfig.from_file(cfg_path)
     ctx["session_factory"] = make_session_factory()
+    # The scheduler needs an arq pool to enqueue jobs; reuse what arq built
+    # for us on `ctx["redis"]`. submit_job() only calls `enqueue_job`, which
+    # ArqRedis implements.
+    ctx["scheduler_task"] = asyncio.create_task(
+        run_loop(ctx["lake_config"], ctx["session_factory"], ctx["redis"])
+    )
     logger.info("worker ready (config=%s, max_jobs=%s)", cfg_path, WorkerSettings.max_jobs)
 
 
 async def on_shutdown(ctx: dict[str, Any]) -> None:
+    task = ctx.get("scheduler_task")
+    if task is not None:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError, Exception):
+            await task
     logger.info("worker shutting down")
 
 

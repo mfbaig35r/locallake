@@ -312,6 +312,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Schedules */
+        get: operations["list_schedules_schedules_get"];
+        put?: never;
+        /** Create Schedule */
+        post: operations["create_schedule_schedules_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedules/{schedule_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Schedule */
+        delete: operations["delete_schedule_schedules__schedule_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Schedule */
+        patch: operations["update_schedule_schedules__schedule_id__patch"];
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -625,6 +661,64 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /** ScheduleIn */
+        ScheduleIn: {
+            /** Notebook Path */
+            notebook_path: string;
+            /** Cron Expression */
+            cron_expression: string;
+            /** Parameters */
+            parameters?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+        };
+        /** ScheduleListOut */
+        ScheduleListOut: {
+            /** Items */
+            items: components["schemas"]["ScheduleOut"][];
+            /** Total */
+            total: number;
+        };
+        /** ScheduleOut */
+        ScheduleOut: {
+            /** Id */
+            id: string;
+            /** Notebook Path */
+            notebook_path: string;
+            /** Cron Expression */
+            cron_expression: string;
+            /** Enabled */
+            enabled: boolean;
+            /** Last Run At */
+            last_run_at: string | null;
+            /** Last Run Id */
+            last_run_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Parameters Json */
+            parameters_json: string;
+            /** Next Fire At */
+            next_fire_at: string | null;
+        };
+        /** ScheduleUpdate */
+        ScheduleUpdate: {
+            /** Cron Expression */
+            cron_expression?: string | null;
+            /** Parameters */
+            parameters?: {
+                [key: string]: unknown;
+            } | null;
+            /** Enabled */
+            enabled?: boolean | null;
         };
         /** TableDetailOut */
         TableDetailOut: {
@@ -1270,6 +1364,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GitLogOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_schedules_schedules_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleListOut"];
+                };
+            };
+        };
+    };
+    create_schedule_schedules_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_schedule_schedules__schedule_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_schedule_schedules__schedule_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleOut"];
                 };
             };
             /** @description Validation Error */

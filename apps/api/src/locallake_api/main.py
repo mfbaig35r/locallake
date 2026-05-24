@@ -26,6 +26,7 @@ from locallake_api.routes import (
     git,
     jobs,
     notebooks,
+    schedules,
     sql,
     templates,
 )
@@ -67,6 +68,7 @@ app.include_router(artifacts.router)
 app.include_router(sql.router)
 app.include_router(catalog.router)
 app.include_router(git.router)
+app.include_router(schedules.router)
 app.include_router(websocket.router)
 
 

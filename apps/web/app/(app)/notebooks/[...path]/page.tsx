@@ -1,10 +1,12 @@
 "use client";
 
-import { ChevronLeft, Loader2, Play } from "lucide-react";
+import { CalendarClock, ChevronLeft, Loader2, Play } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/jobs/status-badge";
+import { NewScheduleModal } from "@/components/schedules/new-schedule-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -17,6 +19,7 @@ export default function NotebookDetailPage() {
   const notebookPath = (params.path ?? []).map(decodeURIComponent).join("/");
   const { data, isLoading, error } = useNotebook(notebookPath);
   const run = useRunNotebook();
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
   async function handleRun() {
     try {
@@ -67,9 +70,14 @@ export default function NotebookDetailPage() {
             </h1>
             <p className="truncate text-sm text-muted-foreground">{data.path}</p>
           </div>
-          <Button onClick={handleRun} disabled={run.isPending}>
-            <Play className="h-4 w-4" /> Run
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setScheduleOpen(true)}>
+              <CalendarClock className="h-3.5 w-3.5" /> Schedule
+            </Button>
+            <Button onClick={handleRun} disabled={run.isPending}>
+              <Play className="h-4 w-4" /> Run
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -84,6 +92,16 @@ export default function NotebookDetailPage() {
           <Meta label="Recent runs" value={String(data.recent_runs.length)} />
         </CardContent>
       </Card>
+
+      <NewScheduleModal
+        open={scheduleOpen}
+        onClose={() => setScheduleOpen(false)}
+        initialNotebookPath={notebookPath}
+        onCreated={() => {
+          toast.success("Schedule created");
+          router.push("/schedules");
+        }}
+      />
 
       <Card>
         <CardHeader>
