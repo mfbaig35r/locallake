@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# uv
+.uv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# LocalLake data (mounted volumes — user-generated, never commit)
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
+data/*.duckdb
+data/*.duckdb.wal
+workspace/artifacts/*
+workspace/logs/*
+!workspace/**/.gitkeep
+
+# Node
+node_modules/
+.next/
+
+# Logs
+*.log

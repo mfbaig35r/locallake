@@ -1,0 +1,24 @@
+[project]
+name = "locallake-core"
+version = "0.0.1"
+description = "LocalLake shared core — config, models, DB session, CLI"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.13.0",
+    "pydantic>=2.5.0",
+    "pyyaml>=6.0",
+    "duckdb>=1.0.0",
+    "click>=8.1.0",
+]
+
+[project.scripts]
+lake = "locallake_core.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/locallake_core"]

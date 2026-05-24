@@ -1,0 +1,18 @@
+[project]
+name = "locallake-worker"
+version = "0.0.1"
+description = "LocalLake background worker (arq)"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "arq>=0.26.0",
+    "marimo-sandbox>=1.0.9",
+    "locallake-core",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/locallake_worker"]

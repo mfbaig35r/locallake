@@ -1,0 +1,52 @@
+[project]
+name = "locallake-workspace"
+version = "0.0.1"
+description = "LocalLake — local-first Databricks-style workbench"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Fahad Baig" }]
+
+[tool.uv.workspace]
+members = [
+    "apps/api",
+    "apps/worker",
+    "packages/locallake",
+    "packages/locallake_core",
+]
+
+[tool.uv.sources]
+locallake = { workspace = true }
+locallake-core = { workspace = true }
+locallake-api = { workspace = true }
+locallake-worker = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6.0",
+    "mypy>=1.10.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.27.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "W", "C4", "SIM"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]  # assert in tests is fine
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

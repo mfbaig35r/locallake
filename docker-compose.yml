@@ -1,0 +1,66 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      LOCALLAKE_CONFIG: /config/workspace.yaml
+      LOCALLAKE_METADATA_DB: /data/metadata.sqlite
+      REDIS_URL: redis://redis:6379
+      LOCALLAKE_PASSWORD: ${LOCALLAKE_PASSWORD:-}
+      LOCALLAKE_CORS_ORIGINS: http://localhost:3000
+    volumes:
+      - ./workspace:/workspace
+      - ./data:/data
+      - ./config:/config
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    environment:
+      LOCALLAKE_CONFIG: /config/workspace.yaml
+      LOCALLAKE_METADATA_DB: /data/metadata.sqlite
+      REDIS_URL: redis://redis:6379
+      LOCALLAKE_WORKER_CONCURRENCY: ${LOCALLAKE_WORKER_CONCURRENCY:-2}
+    volumes:
+      - ./workspace:/workspace
+      - ./data:/data
+      - ./config:/config
+      - marimo-cache:/root/.marimo-sandbox
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on: [api]
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  marimo-cache:

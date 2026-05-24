@@ -1,0 +1,11 @@
+workspace:
+  name: my-locallake
+  root_path: /workspace
+database:
+  type: duckdb
+  path: /data/local.duckdb
+paths:
+  notebooks: /workspace/notebooks
+  artifacts: /workspace/artifacts
+  logs: /workspace/logs
+  templates: /workspace/templates
